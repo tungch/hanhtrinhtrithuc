@@ -35,6 +35,37 @@ body{font-family:system-ui,sans-serif;margin:0;padding:2rem;background:#F6F7F9}
 	text-align: right;
 }
 
+/* O bai dau va bai cuoi, WordPress van xuat the <div> nhung khong co
+   <a> ben trong. De nguyen se thanh mot o vien rong trong nhu loi.
+   An han o do, va de o con lai giu nguyen ben cua no thay vi gian
+   ra giua. */
+.htt-post-nav .wp-block-post-navigation-link:not(:has(a)) {
+	display: none;
+}
+
+.htt-post-nav:has(.post-navigation-link-next:not(:has(a))) {
+	justify-content: flex-start;
+}
+
+.htt-post-nav:has(.post-navigation-link-previous:not(:has(a))) {
+	justify-content: flex-end;
+}
+
+/* Chi con mot o thi no khong nen keo dai het chieu ngang - giu
+   do rong tuong duong luc co ca hai. */
+.htt-post-nav:has(.wp-block-post-navigation-link:not(:has(a)))
+	.wp-block-post-navigation-link:has(a) {
+	flex: 0 1 calc(50% - .75rem);
+}
+
+/* Trinh duyet cu khong ho tro :has() - o rong se khong co vien,
+   nen van khong lo ra khung trong. */
+@supports not selector(:has(a)) {
+	.htt-post-nav .wp-block-post-navigation-link:empty {
+		display: none;
+	}
+}
+
 .htt-post-nav .wp-block-post-navigation-link__arrow-previous,
 .htt-post-nav .wp-block-post-navigation-link__arrow-next {
 	flex: none;
@@ -85,21 +116,27 @@ body{font-family:system-ui,sans-serif;margin:0;padding:2rem;background:#F6F7F9}
 
 
 </style></head><body>
-<div class="case"><h3>Tieu de ngan (1 dong)</h3>
+<div class="case"><h3>1. Ca hai deu co, tieu de dai</h3>
 <div class="wp-block-group htt-post-nav">
-<div class="post-navigation-link-previous wp-block-post-navigation-link"><span class="wp-block-post-navigation-link__arrow-previous" aria-hidden="true">←</span><a href="#">Nhà Giả Kim</a></div>
-<div class="post-navigation-link-next wp-block-post-navigation-link"><a href="#">Sapiens</a><span class="wp-block-post-navigation-link__arrow-next" aria-hidden="true">→</span></div>
+<div class="post-navigation-link-previous wp-block-post-navigation-link"><span class="wp-block-post-navigation-link__arrow-previous">←</span><a href="#">Review Sapiens: vì sao loài người thống trị thế giới này</a></div>
+<div class="post-navigation-link-next wp-block-post-navigation-link"><a href="#">Siddhartha (Hermann Hesse): Hành trình Giác Ngộ của một con người</a><span class="wp-block-post-navigation-link__arrow-next">→</span></div>
 </div></div>
 
-<div class="case"><h3>Tieu de dai (2-3 dong) - truong hop bi loi</h3>
+<div class="case"><h3>2. Bai moi nhat - KHONG co bai sau</h3>
 <div class="wp-block-group htt-post-nav">
-<div class="post-navigation-link-previous wp-block-post-navigation-link"><span class="wp-block-post-navigation-link__arrow-previous" aria-hidden="true">←</span><a href="#">Review Sapiens: vì sao loài người thống trị thế giới này</a></div>
-<div class="post-navigation-link-next wp-block-post-navigation-link"><a href="#">Siddhartha (Hermann Hesse): Hành trình Giác Ngộ của một con người</a><span class="wp-block-post-navigation-link__arrow-next" aria-hidden="true">→</span></div>
+<div class="post-navigation-link-previous wp-block-post-navigation-link"><span class="wp-block-post-navigation-link__arrow-previous">←</span><a href="#">Đọc sách thế nào để không quên sau một tuần</a></div>
+<div class="post-navigation-link-next wp-block-post-navigation-link"></div>
 </div></div>
 
-<div class="case"><h3>Mot ben dai, mot ben ngan</h3>
+<div class="case"><h3>3. Bai cu nhat - KHONG co bai truoc</h3>
 <div class="wp-block-group htt-post-nav">
-<div class="post-navigation-link-previous wp-block-post-navigation-link"><span class="wp-block-post-navigation-link__arrow-previous" aria-hidden="true">←</span><a href="#">Đắc Nhân Tâm — toàn bộ nội dung sách nói đầy đủ nhất</a></div>
-<div class="post-navigation-link-next wp-block-post-navigation-link"><a href="#">Sapiens</a><span class="wp-block-post-navigation-link__arrow-next" aria-hidden="true">→</span></div>
+<div class="post-navigation-link-previous wp-block-post-navigation-link"></div>
+<div class="post-navigation-link-next wp-block-post-navigation-link"><a href="#">Đọc sách thế nào để không quên sau một tuần</a><span class="wp-block-post-navigation-link__arrow-next">→</span></div>
+</div></div>
+
+<div class="case"><h3>4. Chi co 1 bai - khong co ca hai</h3>
+<div class="wp-block-group htt-post-nav">
+<div class="post-navigation-link-previous wp-block-post-navigation-link"></div>
+<div class="post-navigation-link-next wp-block-post-navigation-link"></div>
 </div></div>
 </body></html>
