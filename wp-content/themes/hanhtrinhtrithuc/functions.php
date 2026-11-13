@@ -156,10 +156,124 @@ function htt_save_category_field( $term_id ) {
 add_action( 'edited_category', 'htt_save_category_field' );
 
 /**
- * Render the "watch on YouTube" button for a post's channel.
+ * Register the per-post video URL field.
  *
- * Prints nothing when the post has no channel category, or when that
- * channel has no URL set yet - better an absent button than a dead link.
+ * Each post mirrors one YouTube video, so the button should return the
+ * reader to that exact video. Registering the meta with show_in_rest
+ * puts the field in the block editor sidebar under "Bài viết".
+ */
+function htt_register_post_meta() {
+	register_post_meta(
+		'post',
+		'htt_video_url',
+		array(
+			'type'              => 'string',
+			'single'            => true,
+			'default'           => '',
+			'show_in_rest'      => true,
+			'sanitize_callback' => 'esc_url_raw',
+			'auth_callback'     => function () {
+				return current_user_can( 'edit_posts' );
+			},
+		)
+	);
+}
+add_action( 'init', 'htt_register_post_meta' );
+
+/**
+ * Add the video URL box to the post editor.
+ */
+function htt_video_meta_box() {
+	add_meta_box(
+		'htt-video-url',
+		'Link video YouTube',
+		'htt_video_meta_box_html',
+		'post',
+		'side',
+		'high'
+	);
+}
+add_action( 'add_meta_boxes', 'htt_video_meta_box' );
+
+/**
+ * Render the video URL box.
+ *
+ * @param WP_Post $post Post being edited.
+ */
+function htt_video_meta_box_html( $post ) {
+	$value = get_post_meta( $post->ID, 'htt_video_url', true );
+	wp_nonce_field( 'htt_video_url_save', 'htt_video_url_nonce' );
+	?>
+	<p>
+		<label for="htt_video_url" class="screen-reader-text">Link video YouTube</label>
+		<input type="url" name="htt_video_url" id="htt_video_url"
+			value="<?php echo esc_attr( $value ); ?>"
+			placeholder="https://www.youtube.com/watch?v=..."
+			style="width:100%" />
+	</p>
+	<p class="description">
+		Dán link video tương ứng với bài viết này. Nút &ldquo;Xem video&rdquo;
+		sẽ dẫn người đọc về đúng video đó.
+	</p>
+	<?php
+}
+
+/**
+ * Save the video URL.
+ *
+ * @param int $post_id Post being saved.
+ */
+function htt_save_video_url( $post_id ) {
+	if ( ! isset( $_POST['htt_video_url_nonce'] )
+		|| ! wp_verify_nonce( sanitize_key( $_POST['htt_video_url_nonce'] ), 'htt_video_url_save' ) ) {
+		return;
+	}
+
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+
+	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		return;
+	}
+
+	if ( ! isset( $_POST['htt_video_url'] ) ) {
+		return;
+	}
+
+	$url = esc_url_raw( wp_unslash( $_POST['htt_video_url'] ) );
+
+	if ( '' === $url ) {
+		delete_post_meta( $post_id, 'htt_video_url' );
+	} else {
+		update_post_meta( $post_id, 'htt_video_url', $url );
+	}
+}
+add_action( 'save_post_post', 'htt_save_video_url' );
+
+/**
+ * Which channel does this post belong to?
+ *
+ * @param int $post_id Post to inspect.
+ * @return array{slug: string, name: string, role: string}|null
+ */
+function htt_post_channel( $post_id ) {
+	foreach ( htt_channels() as $slug => $channel ) {
+		if ( has_category( $slug, $post_id ) ) {
+			return array_merge( array( 'slug' => $slug ), $channel );
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Render the "watch on YouTube" button.
+ *
+ * Prefers the post's own video URL so the reader lands on the exact
+ * video the article covers. Falls back to the channel page when a post
+ * has no video set, and renders nothing when neither exists - better an
+ * absent button than a dead link.
  *
  * @return string Button markup, or an empty string.
  */
@@ -168,29 +282,36 @@ function htt_youtube_button() {
 		return '';
 	}
 
-	foreach ( htt_channels() as $slug => $channel ) {
-		if ( ! has_category( $slug ) ) {
-			continue;
-		}
+	$post_id = get_the_ID();
+	$channel = htt_post_channel( $post_id );
 
-		$url = htt_channel_url( $slug );
-
-		if ( '' === $url ) {
-			return '';
-		}
-
-		return sprintf(
-			'<p class="htt-yt-wrap"><a class="htt-yt htt-yt--%1$s" href="%2$s" target="_blank" rel="noopener">'
-			. '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="16" height="16">'
-			. '<path fill="currentColor" d="M8 5.5v13l11-6.5z"/></svg>'
-			. 'Xem trên kênh %3$s</a></p>',
-			esc_attr( $slug ),
-			esc_url( $url ),
-			esc_html( $channel['name'] )
-		);
+	if ( ! $channel ) {
+		return '';
 	}
 
-	return '';
+	$video = (string) get_post_meta( $post_id, 'htt_video_url', true );
+
+	if ( '' !== $video ) {
+		$url   = $video;
+		$label = 'Xem video trên YouTube';
+	} else {
+		$url   = htt_channel_url( $channel['slug'] );
+		$label = sprintf( 'Xem trên kênh %s', $channel['name'] );
+	}
+
+	if ( '' === $url ) {
+		return '';
+	}
+
+	return sprintf(
+		'<p class="htt-yt-wrap"><a class="htt-yt htt-yt--%1$s" href="%2$s" target="_blank" rel="noopener">'
+		. '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="16" height="16">'
+		. '<path fill="currentColor" d="M8 5.5v13l11-6.5z"/></svg>'
+		. '%3$s</a></p>',
+		esc_attr( $channel['slug'] ),
+		esc_url( $url ),
+		esc_html( $label )
+	);
 }
 add_shortcode( 'htt_youtube', 'htt_youtube_button' );
 
