@@ -525,6 +525,9 @@ body {
 	border: 1px solid var(--htt-rule);
 	border-radius: 999px;
 	background-color: var(--htt-surface);
+	/* Luon nam sat le phai, bat ke menu dai ngan the nao */
+	margin-inline-start: auto;
+	flex: none;
 }
 
 .htt-theme-switch button {
