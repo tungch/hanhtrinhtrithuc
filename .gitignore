@@ -1,0 +1,33 @@
+# WordPress core - cai lai duoc, khong can version
+/wp-admin/
+/wp-includes/
+/wp-*.php
+/index.php
+/xmlrpc.php
+/license.txt
+/readme.html
+
+# Secrets va cau hinh rieng cua may
+wp-config.php
+
+# Noi dung do nguoi dung tai len
+/wp-content/uploads/
+/wp-content/upgrade/
+/wp-content/upgrade-temp-backup/
+/wp-content/cache/
+
+# Theme/plugin mac dinh cua WordPress
+/wp-content/themes/twentytwenty*/
+/wp-content/plugins/akismet/
+/wp-content/plugins/hello.php
+
+# Log va file tam
+/wp-content/debug.log
+*.log
+*.bak
+*.tmp
+
+# Rac he dieu hanh
+Thumbs.db
+desktop.ini
+.DS_Store
