@@ -45,6 +45,22 @@ function htt_enqueue_scripts() {
 		(string) filemtime( $path ),
 		true
 	);
+
+	// Share buttons only exist on single posts.
+	if ( is_singular( 'post' ) ) {
+		$share_rel  = '/assets/js/share.js';
+		$share_path = get_stylesheet_directory() . $share_rel;
+
+		if ( file_exists( $share_path ) ) {
+			wp_enqueue_script(
+				'htt-share',
+				get_stylesheet_directory_uri() . $share_rel,
+				array(),
+				(string) filemtime( $share_path ),
+				true
+			);
+		}
+	}
 }
 add_action( 'wp_enqueue_scripts', 'htt_enqueue_scripts' );
 
@@ -532,6 +548,124 @@ function htt_meta_tags() {
 add_action( 'wp_head', 'htt_meta_tags', 5 );
 
 /**
+ * Output Schema.org structured data for single posts.
+ *
+ * Tells search engines this is an article, when it was published and
+ * which image belongs to it - the data Google uses to decide how a
+ * result is displayed.
+ */
+function htt_schema() {
+	if ( ! is_singular( 'post' ) ) {
+		return;
+	}
+
+	$post_id = get_the_ID();
+	$image   = get_the_post_thumbnail_url( $post_id, 'htt-hero' )
+		?: get_the_post_thumbnail_url( $post_id, 'full' );
+
+	$desc = wp_strip_all_tags( (string) get_the_excerpt( $post_id ) );
+	$desc = trim( preg_replace( '/\s+/', ' ', $desc ) );
+
+	$data = array(
+		'@context'         => 'https://schema.org',
+		'@type'            => 'Article',
+		'headline'         => get_the_title( $post_id ),
+		'datePublished'    => get_the_date( 'c', $post_id ),
+		'dateModified'     => get_the_modified_date( 'c', $post_id ),
+		'inLanguage'       => 'vi',
+		'mainEntityOfPage' => array(
+			'@type' => 'WebPage',
+			'@id'   => get_permalink( $post_id ),
+		),
+		'publisher'        => array(
+			'@type' => 'Organization',
+			'name'  => get_bloginfo( 'name' ),
+		),
+	);
+
+	if ( '' !== $desc ) {
+		$data['description'] = $desc;
+	}
+
+	if ( $image ) {
+		$data['image'] = $image;
+	}
+
+	$channel = htt_post_channel( $post_id );
+
+	if ( $channel ) {
+		$data['articleSection'] = $channel['name'];
+	}
+
+	printf(
+		'<script type="application/ld+json">%s</script>' . "\n",
+		wp_json_encode( $data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES )
+	);
+
+	// Facebook and Zalo read these when a link is shared.
+	printf(
+		'<meta property="article:published_time" content="%s" />' . "\n",
+		esc_attr( get_the_date( 'c', $post_id ) )
+	);
+	printf(
+		'<meta property="article:modified_time" content="%s" />' . "\n",
+		esc_attr( get_the_modified_date( 'c', $post_id ) )
+	);
+
+	if ( $channel ) {
+		printf( '<meta property="article:section" content="%s" />' . "\n", esc_attr( $channel['name'] ) );
+	}
+}
+add_action( 'wp_head', 'htt_schema', 6 );
+
+/**
+ * Share buttons.
+ *
+ * Readers pass links on in Facebook and Zalo, so those two get real
+ * buttons; everything else is covered by copying the link.
+ *
+ * @return string
+ */
+function htt_share_buttons() {
+	if ( ! is_singular( 'post' ) ) {
+		return '';
+	}
+
+	$url   = get_permalink();
+	$title = get_the_title();
+
+	$fb = 'https://www.facebook.com/sharer/sharer.php?u=' . rawurlencode( $url );
+	$zl = 'https://zalo.me/share?u=' . rawurlencode( $url ) . '&t=' . rawurlencode( $title );
+
+	ob_start();
+	?>
+	<div class="htt-share">
+		<span class="htt-share__label">Chia sẻ</span>
+
+		<a class="htt-share__btn" href="<?php echo esc_url( $fb ); ?>"
+			target="_blank" rel="noopener" aria-label="Chia sẻ lên Facebook">
+			<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.45 2.89h-2.33v6.99A10 10 0 0 0 22 12z"/></svg>
+			<span>Facebook</span>
+		</a>
+
+		<a class="htt-share__btn" href="<?php echo esc_url( $zl ); ?>"
+			target="_blank" rel="noopener" aria-label="Chia sẻ lên Zalo">
+			<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2C6.2 2 1.5 6 1.5 11c0 2.8 1.5 5.3 3.8 7-.2 1.3-.8 2.6-1.7 3.6-.2.2 0 .5.3.4 2-.5 3.6-1.4 4.6-2.1 1.1.3 2.3.5 3.5.5 5.8 0 10.5-4 10.5-9S17.8 2 12 2z"/></svg>
+			<span>Zalo</span>
+		</a>
+
+		<button type="button" class="htt-share__btn htt-share__copy"
+			data-url="<?php echo esc_attr( $url ); ?>" aria-label="Sao chép liên kết">
+			<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" d="M10.5 13.5a4 4 0 0 0 5.7 0l2.8-2.8a4 4 0 0 0-5.7-5.7l-1.3 1.3M13.5 10.5a4 4 0 0 0-5.7 0l-2.8 2.8a4 4 0 1 0 5.7 5.7l1.3-1.3"/></svg>
+			<span>Sao chép link</span>
+		</button>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+add_shortcode( 'htt_share', 'htt_share_buttons' );
+
+/**
  * Declare the site language as Vietnamese on the front end.
  *
  * The content is Vietnamese even though the admin runs in English, and
@@ -557,6 +691,150 @@ function htt_language_attributes( $output, $doctype = 'html' ) {
 	return $output;
 }
 add_filter( 'language_attributes', 'htt_language_attributes', 10, 2 );
+
+/**
+ * Vietnamese wording for the comment blocks.
+ *
+ * The site runs the English WordPress build, so these blocks render
+ * "One response to", "Reply" and English dates. Readers here are
+ * Vietnamese, and the comment area is the one place they are asked
+ * to write something.
+ *
+ * @param string $content Rendered block markup.
+ * @return string
+ */
+function htt_translate_comment_blocks( $content ) {
+	return str_replace(
+		array( '>Reply<', '>Leave a Reply<', '>Leave a Comment<', 'Cancel reply' ),
+		array( '>Trả lời<', '>Để lại bình luận<', '>Để lại bình luận<', 'Huỷ' ),
+		$content
+	);
+}
+add_filter( 'render_block_core/comment-reply-link', 'htt_translate_comment_blocks' );
+add_filter( 'render_block_core/post-comments-form', 'htt_translate_comment_blocks' );
+
+/**
+ * Vietnamese comments-title, including the plural forms.
+ *
+ * @param string $content Rendered block markup.
+ * @return string
+ */
+function htt_comments_title( $content ) {
+	$count = (int) get_comments_number();
+
+	if ( ! $count ) {
+		return $content;
+	}
+
+	$text = 1 === $count ? 'Một bình luận' : sprintf( '%d bình luận', $count );
+
+	// Replace whatever English title WordPress produced.
+	return preg_replace(
+		'/(<h[1-6][^>]*>).*?(<\/h[1-6]>)/s',
+		// Braces matter: with "2 bình luận" a bare $1 would be read as $12.
+		'${1}' . esc_html( $text ) . '${2}',
+		$content
+	);
+}
+add_filter( 'render_block_core/comments-title', 'htt_comments_title' );
+
+/**
+ * Vietnamese date format for comments.
+ *
+ * @param string $content Rendered block markup.
+ * @return string
+ */
+function htt_comment_date( $content ) {
+	// The date text sits inside an <a> nested in <time>, so match the
+	// whole <time> element and rewrite only its innermost text.
+	return preg_replace_callback(
+		'/<time[^>]*datetime="([^"]+)"[^>]*>.*?<\/time>/s',
+		static function ( $m ) {
+			$ts = strtotime( $m[1] );
+
+			if ( ! $ts ) {
+				return $m[0];
+			}
+
+			$date = esc_html( wp_date( 'j/n/Y', $ts ) );
+
+			// Keep the permalink wrapper, swap the label. Braces are
+			// required: a bare $1 followed by "13/11" would be read as
+			// backreference $113 and swallow the opening <a> tag.
+			return preg_replace( '/(<a[^>]*>).*?(<\/a>)/s', '${1}' . $date . '${2}', $m[0], 1 )
+				?: $m[0];
+		},
+		$content
+	);
+}
+add_filter( 'render_block_core/comment-date', 'htt_comment_date' );
+
+/**
+ * Vietnamese label for the "remember me" cookie checkbox.
+ *
+ * @param array $defaults Form arguments.
+ * @return array
+ */
+function htt_comment_cookie_label( $defaults ) {
+	if ( ! empty( $defaults['fields']['cookies'] ) ) {
+		$defaults['fields']['cookies'] = preg_replace(
+			'/(<label[^>]*>).*?(<\/label>)/s',
+			'$1Lưu tên và email của tôi cho lần bình luận sau.$2',
+			$defaults['fields']['cookies']
+		);
+	}
+
+	return $defaults;
+}
+add_filter( 'comment_form_defaults', 'htt_comment_cookie_label', 20 );
+
+/**
+ * Vietnamese labels inside the comment form.
+ *
+ * @param array $fields Form field markup, keyed by name.
+ * @return array
+ */
+function htt_comment_form_fields( $fields ) {
+	// The website field attracts spam and readers here rarely have one.
+	unset( $fields['url'] );
+
+	$fields['author'] = str_replace(
+		array( '>Name', 'Name <span', 'placeholder="Name"' ),
+		array( '>Tên', 'Tên <span', 'placeholder="Tên"' ),
+		$fields['author'] ?? ''
+	);
+
+	$fields['email'] = str_replace(
+		array( '>Email', 'Email <span', 'placeholder="Email"' ),
+		array( '>Email (không hiển thị công khai)', 'Email <span', 'placeholder="Email"' ),
+		$fields['email'] ?? ''
+	);
+
+	return array_filter( $fields );
+}
+add_filter( 'comment_form_default_fields', 'htt_comment_form_fields' );
+
+/**
+ * Vietnamese defaults for the comment form itself.
+ *
+ * @param array $defaults Form arguments.
+ * @return array
+ */
+function htt_comment_form_defaults( $defaults ) {
+	$defaults['title_reply']        = 'Để lại bình luận';
+	$defaults['title_reply_to']     = 'Trả lời %s';
+	$defaults['cancel_reply_link']  = 'Huỷ';
+	$defaults['label_submit']       = 'Gửi bình luận';
+	$defaults['comment_notes_before'] = '';
+	$defaults['comment_field']      = str_replace(
+		'>Comment',
+		'>Nội dung bình luận',
+		$defaults['comment_field'] ?? ''
+	);
+
+	return $defaults;
+}
+add_filter( 'comment_form_defaults', 'htt_comment_form_defaults' );
 
 /**
  * Translate the navigation block's built-in labels.

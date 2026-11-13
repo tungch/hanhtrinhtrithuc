@@ -342,6 +342,183 @@ body {
 }
 
 /* ==========================================================================
+   Tags cuoi bai
+   ========================================================================== */
+
+.htt-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .4rem;
+}
+
+.htt-tags a {
+	display: inline-block;
+	padding: .2em .65em;
+	border: 1px solid var(--htt-rule);
+	border-radius: 999px;
+	color: var(--htt-muted);
+	text-decoration: none;
+	line-height: 1.6;
+}
+
+.htt-tags a:hover,
+.htt-tags a:focus-visible {
+	border-color: var(--htt-b-text);
+	color: var(--htt-b-text);
+}
+
+/* ==========================================================================
+   Nut chia se
+   ========================================================================== */
+
+.htt-share {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: .5rem;
+	margin-block-start: 1.6rem;
+}
+
+.htt-share__label {
+	font-family: var(--wp--preset--font-family--manrope);
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: 700;
+	color: var(--htt-muted);
+	letter-spacing: .05em;
+	text-transform: uppercase;
+	margin-inline-end: .2rem;
+}
+
+.htt-share__btn {
+	display: inline-flex;
+	align-items: center;
+	gap: .4em;
+	padding: .45em .85em;
+	border: 1px solid var(--htt-rule);
+	border-radius: 6px;
+	background-color: var(--htt-surface);
+	color: var(--htt-ink-2);
+	font-family: var(--wp--preset--font-family--manrope);
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: 600;
+	line-height: 1.4;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.htt-share__btn svg {
+	width: 1em;
+	height: 1em;
+	display: block;
+	flex: none;
+}
+
+.htt-share__btn:hover,
+.htt-share__btn:focus-visible {
+	border-color: var(--htt-b-text);
+	color: var(--htt-b-text);
+	text-decoration: none;
+}
+
+.htt-share__btn.is-done {
+	border-color: var(--htt-a-text);
+	color: var(--htt-a-text);
+}
+
+/* ==========================================================================
+   Dieu huong bai truoc / bai sau
+   ========================================================================== */
+
+.htt-post-nav {
+	gap: 1rem;
+}
+
+.htt-post-nav .wp-block-post-navigation-link {
+	flex: 1 1 14rem;
+	min-width: 0;
+}
+
+.htt-post-nav .wp-block-post-navigation-link:last-child {
+	text-align: right;
+}
+
+.htt-post-nav a {
+	display: inline-block;
+	color: var(--htt-ink-2);
+	text-decoration: none;
+	line-height: 1.45;
+}
+
+.htt-post-nav a:hover,
+.htt-post-nav a:focus-visible {
+	color: var(--htt-b-text);
+	text-decoration: underline;
+}
+
+/* ==========================================================================
+   Binh luan
+   ========================================================================== */
+
+.htt-comments {
+	margin-block-start: 0;
+}
+
+.htt-comments .wp-block-comment-author-name a {
+	color: var(--htt-ink);
+	text-decoration: none;
+}
+
+.htt-comments .wp-block-comment-date a {
+	color: var(--htt-muted);
+	text-decoration: none;
+}
+
+.htt-comments .wp-block-comment-template li {
+	padding-block: 1.1rem;
+	border-block-start: 1px solid var(--htt-rule-soft);
+}
+
+.htt-comments .wp-block-comment-template li:first-child {
+	border-block-start: 0;
+}
+
+.htt-comments input[type="text"],
+.htt-comments input[type="email"],
+.htt-comments input[type="url"],
+.htt-comments textarea {
+	width: 100%;
+	max-width: 100%;
+	padding: .6em .75em;
+	border: 1px solid var(--htt-rule);
+	border-radius: 6px;
+	background-color: var(--htt-surface);
+	color: var(--htt-ink);
+	font-family: inherit;
+	font-size: var(--wp--preset--font-size--small);
+}
+
+.htt-comments input:focus-visible,
+.htt-comments textarea:focus-visible {
+	outline: 2px solid var(--htt-b-text);
+	outline-offset: 1px;
+}
+
+.htt-comments .comment-form label {
+	display: block;
+	margin-block-end: .3rem;
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--htt-ink-2);
+}
+
+.htt-comments .comment-form p {
+	margin-block-end: 1rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.htt-share__btn { transition: border-color .15s ease, color .15s ease; }
+}
+
+/* ==========================================================================
    Doc bai dai - tieng Viet co dau can nhieu khoang tho hon
    ========================================================================== */
 
