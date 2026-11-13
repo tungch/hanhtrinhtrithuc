@@ -461,29 +461,78 @@ body {
    ========================================================================== */
 
 .htt-post-nav {
-	gap: 1rem;
+	gap: 1rem 1.5rem;
+	align-items: stretch;
 }
 
+/* WordPress xuat mui ten va tieu de thanh hai phan tu inline rieng le.
+   Khi tieu de dai xuong 2 dong, mui ten bi day len tren tieu de.
+   Dung flex de mui ten thanh mot cot khong co lai, luon nam canh chu
+   va can theo dong dau tien. */
 .htt-post-nav .wp-block-post-navigation-link {
-	flex: 1 1 14rem;
+	display: flex;
+	align-items: flex-start;
+	gap: .5rem;
+	flex: 1 1 13rem;
 	min-width: 0;
+	padding: .75rem .95rem;
+	border: 1px solid var(--htt-rule);
+	border-radius: 8px;
+	background-color: var(--htt-surface);
 }
 
-.htt-post-nav .wp-block-post-navigation-link:last-child {
+/* Bai sau nam ben phai: dao thu tu va don chu ve phia mui ten */
+.htt-post-nav .post-navigation-link-next {
+	justify-content: flex-end;
 	text-align: right;
 }
 
+.htt-post-nav .wp-block-post-navigation-link__arrow-previous,
+.htt-post-nav .wp-block-post-navigation-link__arrow-next {
+	flex: none;
+	margin: 0;
+	line-height: 1.45;
+	color: var(--htt-muted);
+}
+
 .htt-post-nav a {
-	display: inline-block;
+	display: block;
+	min-width: 0;
 	color: var(--htt-ink-2);
 	text-decoration: none;
 	line-height: 1.45;
+	overflow-wrap: break-word;
 }
 
 .htt-post-nav a:hover,
 .htt-post-nav a:focus-visible {
 	color: var(--htt-b-text);
 	text-decoration: underline;
+}
+
+/* Ca o co hieu ung hover, khong chi rieng chu */
+.htt-post-nav .wp-block-post-navigation-link:hover {
+	border-color: var(--htt-b-text);
+}
+
+.htt-post-nav .wp-block-post-navigation-link:hover
+	.wp-block-post-navigation-link__arrow-previous,
+.htt-post-nav .wp-block-post-navigation-link:hover
+	.wp-block-post-navigation-link__arrow-next {
+	color: var(--htt-b-text);
+}
+
+/* Man hinh hep: hai o xep chong, moi o chiem tron chieu ngang */
+@media (max-width: 34rem) {
+	.htt-post-nav .wp-block-post-navigation-link {
+		flex: 1 1 100%;
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.htt-post-nav .wp-block-post-navigation-link {
+		transition: border-color .15s ease;
+	}
 }
 
 /* ==========================================================================
