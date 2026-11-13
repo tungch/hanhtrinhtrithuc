@@ -316,6 +316,36 @@ function htt_youtube_button() {
 add_shortcode( 'htt_youtube', 'htt_youtube_button' );
 
 /**
+ * Keep the current post out of the "Nội dung khác" list.
+ *
+ * The Query Loop block has no exclude-current option. On a single post
+ * every loop on the page is a "more posts" list, so excluding the post
+ * being read is always what we want there.
+ *
+ * @param array $query Query args the block will run.
+ * @return array
+ */
+function htt_exclude_current_post( $query ) {
+	if ( ! is_singular( 'post' ) ) {
+		return $query;
+	}
+
+	$current = get_queried_object_id();
+
+	if ( ! $current ) {
+		return $query;
+	}
+
+	$query['post__not_in'] = array_merge(
+		$query['post__not_in'] ?? array(),
+		array( $current )
+	);
+
+	return $query;
+}
+add_filter( 'query_loop_block_query_vars', 'htt_exclude_current_post' );
+
+/**
  * Register 16:9 image sizes.
  *
  * Every post image here is a YouTube thumbnail, which is always 16:9 and
