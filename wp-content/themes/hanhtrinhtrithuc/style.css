@@ -109,6 +109,37 @@ body {
 }
 
 /* ==========================================================================
+   Nut (wp-element-button)
+
+   theme.json dat nen nut la mau Abooks (#51030E, co dinh) va chu la
+   preset "base". Nhung base da duoc ghi de de theo che do toi, nen o
+   che do toi chu thanh #0F1115 - gan den tren nen do dam, tuong phan
+   chi 1.23, khong doc duoc.
+
+   Nen nut luon dam o ca hai che do, nen chu luon trang moi dung.
+   ========================================================================== */
+
+.wp-element-button,
+.wp-block-button__link,
+.htt-comments input[type="submit"] {
+	color: #FFFFFF;
+}
+
+/* Hover doi nen sang mau chu chinh, nen chu phai lay mau nen trang */
+.wp-element-button:hover,
+.wp-block-button__link:hover,
+.htt-comments input[type="submit"]:hover,
+.wp-element-button:focus-visible,
+.wp-block-button__link:focus-visible,
+.htt-comments input[type="submit"]:focus-visible {
+	color: var(--htt-bg);
+}
+
+.htt-comments input[type="submit"] {
+	cursor: pointer;
+}
+
+/* ==========================================================================
    Anh thumbnail YouTube - luon giu dung ty le 16:9
    ========================================================================== */
 
