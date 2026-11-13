@@ -504,10 +504,12 @@ body {
 }
 
 /* Chi con mot o thi no khong nen keo dai het chieu ngang - giu
-   do rong tuong duong luc co ca hai. */
+   do rong tuong duong luc co ca hai.
+   max() de tren man hinh rat hep o van du cho cho tieu de. */
 .htt-post-nav:has(.wp-block-post-navigation-link:not(:has(a)))
 	.wp-block-post-navigation-link:has(a) {
-	flex: 0 1 calc(50% - .75rem);
+	flex: 0 1 max(13rem, calc(50% - .75rem));
+	max-width: 100%;
 }
 
 /* Trinh duyet cu khong ho tro :has() - o rong se khong co vien,
@@ -553,9 +555,12 @@ body {
 	color: var(--htt-b-text);
 }
 
-/* Man hinh hep: hai o xep chong, moi o chiem tron chieu ngang */
+/* Man hinh hep: hai o xep chong, moi o chiem tron chieu ngang.
+   Chi ap dung khi co DU ca hai o - neu chi con mot o thi quy tac
+   gioi han 50% o tren phai thang, nen loai truong hop do ra. */
 @media (max-width: 34rem) {
-	.htt-post-nav .wp-block-post-navigation-link {
+	.htt-post-nav:not(:has(.wp-block-post-navigation-link:not(:has(a))))
+		.wp-block-post-navigation-link {
 		flex: 1 1 100%;
 	}
 }

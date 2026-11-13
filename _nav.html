@@ -1,10 +1,14 @@
 <!doctype html><html lang="vi"><head><meta charset="utf-8">
-<title>Kiem thu dieu huong</title>
+<title>Kiem thu dieu huong bai viet</title>
 <style>
 :root{--htt-rule:#E4E6EA;--htt-surface:#fff;--htt-ink-2:#3C414B;--htt-muted:#5F646E;--htt-b-text:#2A62BA;}
-body{font-family:system-ui,sans-serif;margin:0;padding:2rem;background:#F6F7F9}
-.case{max-width:48rem;margin:0 auto 2.5rem}
-.case h3{font:600 .85rem system-ui;color:#5F646E;margin:0 0 .5rem;text-transform:uppercase;letter-spacing:.06em}
+*{box-sizing:border-box}
+body{font-family:system-ui,sans-serif;margin:0;padding:1.5rem;background:#F6F7F9;color:#16181D}
+h2{font-size:1rem;margin:2rem 0 .8rem;padding-bottom:.4rem;border-bottom:2px solid #16181D}
+.case{margin:0 0 1.6rem}
+.case h3{font:600 .78rem system-ui;color:#5F646E;margin:0 0 .45rem;text-transform:uppercase;letter-spacing:.05em}
+.wide{max-width:46rem}
+.narrow{max-width:22rem;outline:1px dashed #bbb;outline-offset:8px;padding:0}
 .wp-block-group{display:flex;flex-wrap:wrap;justify-content:space-between}
 
 
@@ -52,10 +56,12 @@ body{font-family:system-ui,sans-serif;margin:0;padding:2rem;background:#F6F7F9}
 }
 
 /* Chi con mot o thi no khong nen keo dai het chieu ngang - giu
-   do rong tuong duong luc co ca hai. */
+   do rong tuong duong luc co ca hai.
+   max() de tren man hinh rat hep o van du cho cho tieu de. */
 .htt-post-nav:has(.wp-block-post-navigation-link:not(:has(a)))
 	.wp-block-post-navigation-link:has(a) {
-	flex: 0 1 calc(50% - .75rem);
+	flex: 0 1 max(13rem, calc(50% - .75rem));
+	max-width: 100%;
 }
 
 /* Trinh duyet cu khong ho tro :has() - o rong se khong co vien,
@@ -101,9 +107,12 @@ body{font-family:system-ui,sans-serif;margin:0;padding:2rem;background:#F6F7F9}
 	color: var(--htt-b-text);
 }
 
-/* Man hinh hep: hai o xep chong, moi o chiem tron chieu ngang */
+/* Man hinh hep: hai o xep chong, moi o chiem tron chieu ngang.
+   Chi ap dung khi co DU ca hai o - neu chi con mot o thi quy tac
+   gioi han 50% o tren phai thang, nen loai truong hop do ra. */
 @media (max-width: 34rem) {
-	.htt-post-nav .wp-block-post-navigation-link {
+	.htt-post-nav:not(:has(.wp-block-post-navigation-link:not(:has(a))))
+		.wp-block-post-navigation-link {
 		flex: 1 1 100%;
 	}
 }
@@ -116,27 +125,14 @@ body{font-family:system-ui,sans-serif;margin:0;padding:2rem;background:#F6F7F9}
 
 
 </style></head><body>
-<div class="case"><h3>1. Ca hai deu co, tieu de dai</h3>
-<div class="wp-block-group htt-post-nav">
-<div class="post-navigation-link-previous wp-block-post-navigation-link"><span class="wp-block-post-navigation-link__arrow-previous">←</span><a href="#">Review Sapiens: vì sao loài người thống trị thế giới này</a></div>
-<div class="post-navigation-link-next wp-block-post-navigation-link"><a href="#">Siddhartha (Hermann Hesse): Hành trình Giác Ngộ của một con người</a><span class="wp-block-post-navigation-link__arrow-next">→</span></div>
-</div></div>
-
-<div class="case"><h3>2. Bai moi nhat - KHONG co bai sau</h3>
-<div class="wp-block-group htt-post-nav">
-<div class="post-navigation-link-previous wp-block-post-navigation-link"><span class="wp-block-post-navigation-link__arrow-previous">←</span><a href="#">Đọc sách thế nào để không quên sau một tuần</a></div>
-<div class="post-navigation-link-next wp-block-post-navigation-link"></div>
-</div></div>
-
-<div class="case"><h3>3. Bai cu nhat - KHONG co bai truoc</h3>
-<div class="wp-block-group htt-post-nav">
-<div class="post-navigation-link-previous wp-block-post-navigation-link"></div>
-<div class="post-navigation-link-next wp-block-post-navigation-link"><a href="#">Đọc sách thế nào để không quên sau một tuần</a><span class="wp-block-post-navigation-link__arrow-next">→</span></div>
-</div></div>
-
-<div class="case"><h3>4. Chi co 1 bai - khong co ca hai</h3>
-<div class="wp-block-group htt-post-nav">
-<div class="post-navigation-link-previous wp-block-post-navigation-link"></div>
-<div class="post-navigation-link-next wp-block-post-navigation-link"></div>
-</div></div>
+<h2>MAN HINH RONG</h2>
+<div class="case wide"><h3>1. Ca hai deu co, tieu de dai</h3><div class="wp-block-group htt-post-nav"><div class="post-navigation-link-previous wp-block-post-navigation-link"><span class="wp-block-post-navigation-link__arrow-previous">←</span><a href="#">Review Sapiens: vì sao loài người thống trị thế giới này</a></div><div class="post-navigation-link-next wp-block-post-navigation-link"><a href="#">Siddhartha (Hermann Hesse): Hành trình Giác Ngộ của một con người</a><span class="wp-block-post-navigation-link__arrow-next">→</span></div></div></div>
+<div class="case wide"><h3>2. Bai moi nhat - khong co bai sau (o phai an, o trai giu 50%)</h3><div class="wp-block-group htt-post-nav"><div class="post-navigation-link-previous wp-block-post-navigation-link"><span class="wp-block-post-navigation-link__arrow-previous">←</span><a href="#">Đọc sách thế nào để không quên sau một tuần</a></div><div class="post-navigation-link-next wp-block-post-navigation-link"></div></div></div>
+<div class="case wide"><h3>3. Bai cu nhat - khong co bai truoc (o trai an, o phai giu 50%)</h3><div class="wp-block-group htt-post-nav"><div class="post-navigation-link-previous wp-block-post-navigation-link"></div><div class="post-navigation-link-next wp-block-post-navigation-link"><a href="#">Đọc sách thế nào để không quên sau một tuần</a><span class="wp-block-post-navigation-link__arrow-next">→</span></div></div></div>
+<div class="case wide"><h3>4. Chi co 1 bai tren site - ca hai o deu an</h3><div class="wp-block-group htt-post-nav"><div class="post-navigation-link-previous wp-block-post-navigation-link"></div><div class="post-navigation-link-next wp-block-post-navigation-link"></div></div></div>
+<h2>MAN HINH HEP (~22rem)</h2>
+<div class="case narrow"><h3>1. Ca hai deu co, tieu de dai</h3><div class="wp-block-group htt-post-nav"><div class="post-navigation-link-previous wp-block-post-navigation-link"><span class="wp-block-post-navigation-link__arrow-previous">←</span><a href="#">Review Sapiens: vì sao loài người thống trị thế giới này</a></div><div class="post-navigation-link-next wp-block-post-navigation-link"><a href="#">Siddhartha (Hermann Hesse): Hành trình Giác Ngộ của một con người</a><span class="wp-block-post-navigation-link__arrow-next">→</span></div></div></div>
+<div class="case narrow"><h3>2. Bai moi nhat - khong co bai sau (o phai an, o trai giu 50%)</h3><div class="wp-block-group htt-post-nav"><div class="post-navigation-link-previous wp-block-post-navigation-link"><span class="wp-block-post-navigation-link__arrow-previous">←</span><a href="#">Đọc sách thế nào để không quên sau một tuần</a></div><div class="post-navigation-link-next wp-block-post-navigation-link"></div></div></div>
+<div class="case narrow"><h3>3. Bai cu nhat - khong co bai truoc (o trai an, o phai giu 50%)</h3><div class="wp-block-group htt-post-nav"><div class="post-navigation-link-previous wp-block-post-navigation-link"></div><div class="post-navigation-link-next wp-block-post-navigation-link"><a href="#">Đọc sách thế nào để không quên sau một tuần</a><span class="wp-block-post-navigation-link__arrow-next">→</span></div></div></div>
+<div class="case narrow"><h3>4. Chi co 1 bai tren site - ca hai o deu an</h3><div class="wp-block-group htt-post-nav"><div class="post-navigation-link-previous wp-block-post-navigation-link"></div><div class="post-navigation-link-next wp-block-post-navigation-link"></div></div></div>
 </body></html>
