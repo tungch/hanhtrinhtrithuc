@@ -822,11 +822,12 @@ function htt_quotes_slider( $atts = array() ) {
 					aria-label="<?php echo esc_attr( sprintf( '%d trong %d', $index + 1, count( $quotes ) ) ); ?>"
 					<?php echo 0 === $index ? '' : 'aria-hidden="true"'; ?>>
 
+					<blockquote class="htt-quotes__text"><p><?php echo esc_html( $text ); ?></p></blockquote>
+
 					<?php if ( $photo ) : ?>
 						<div class="htt-quotes__photo-wrap"><?php echo wp_kses_post( $photo ); ?></div>
 					<?php endif; ?>
 
-					<blockquote class="htt-quotes__text"><p><?php echo esc_html( $text ); ?></p></blockquote>
 					<figcaption class="htt-quotes__name"><?php echo esc_html( $quote->post_title ); ?></figcaption>
 				</figure>
 			<?php endforeach; ?>
