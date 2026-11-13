@@ -316,6 +316,112 @@ function htt_youtube_button() {
 add_shortcode( 'htt_youtube', 'htt_youtube_button' );
 
 /**
+ * Output description and Open Graph tags.
+ *
+ * Readers arrive from YouTube and share links onward in Zalo, Facebook
+ * and Messenger. Without these tags a shared link shows no preview image
+ * and no summary, which costs clicks on exactly the path that matters.
+ */
+function htt_meta_tags() {
+	if ( is_singular( 'post' ) ) {
+		$post_id = get_the_ID();
+		$title   = get_the_title( $post_id );
+		$desc    = get_the_excerpt( $post_id );
+		$url     = get_permalink( $post_id );
+		$image   = get_the_post_thumbnail_url( $post_id, 'htt-hero' )
+			?: get_the_post_thumbnail_url( $post_id, 'full' );
+		$type    = 'article';
+	} elseif ( is_category() ) {
+		$term  = get_queried_object();
+		$title = $term->name;
+		$desc  = $term->description;
+		$url   = get_term_link( $term );
+		$image = '';
+		$type  = 'website';
+	} else {
+		$title = get_bloginfo( 'name' );
+		$desc  = get_bloginfo( 'description' );
+		$url   = home_url( '/' );
+		$image = '';
+		$type  = 'website';
+	}
+
+	$desc = wp_strip_all_tags( (string) $desc );
+	$desc = trim( preg_replace( '/\s+/', ' ', $desc ) );
+
+	if ( mb_strlen( $desc ) > 160 ) {
+		$desc = mb_substr( $desc, 0, 157 ) . '…';
+	}
+
+	if ( '' !== $desc ) {
+		printf( '<meta name="description" content="%s" />' . "\n", esc_attr( $desc ) );
+		printf( '<meta property="og:description" content="%s" />' . "\n", esc_attr( $desc ) );
+		printf( '<meta name="twitter:description" content="%s" />' . "\n", esc_attr( $desc ) );
+	}
+
+	printf( '<meta property="og:title" content="%s" />' . "\n", esc_attr( $title ) );
+	printf( '<meta property="og:type" content="%s" />' . "\n", esc_attr( $type ) );
+	printf( '<meta property="og:url" content="%s" />' . "\n", esc_url( $url ) );
+	printf( '<meta property="og:site_name" content="%s" />' . "\n", esc_attr( get_bloginfo( 'name' ) ) );
+	printf( '<meta property="og:locale" content="vi_VN" />' . "\n" );
+	printf( '<meta name="twitter:title" content="%s" />' . "\n", esc_attr( $title ) );
+
+	if ( $image ) {
+		printf( '<meta property="og:image" content="%s" />' . "\n", esc_url( $image ) );
+		printf( '<meta name="twitter:image" content="%s" />' . "\n", esc_url( $image ) );
+		printf( '<meta name="twitter:card" content="summary_large_image" />' . "\n" );
+	} else {
+		printf( '<meta name="twitter:card" content="summary" />' . "\n" );
+	}
+}
+add_action( 'wp_head', 'htt_meta_tags', 5 );
+
+/**
+ * Declare the site language as Vietnamese on the front end.
+ *
+ * The content is Vietnamese even though the admin runs in English, and
+ * <html lang> is what screen readers use to pick a pronunciation and
+ * what search engines use to classify the page.
+ *
+ * @param string $output Existing language attributes.
+ * @param string $doctype Context the attributes are for.
+ * @return string
+ */
+function htt_language_attributes( $output, $doctype = 'html' ) {
+	if ( is_admin() || 'html' !== $doctype ) {
+		return $output;
+	}
+
+	// Replace whatever locale WordPress inferred with the content language.
+	$output = preg_replace( '/lang="[^"]*"/', 'lang="vi"', $output );
+
+	if ( false === strpos( $output, 'lang=' ) ) {
+		$output = trim( $output . ' lang="vi"' );
+	}
+
+	return $output;
+}
+add_filter( 'language_attributes', 'htt_language_attributes', 10, 2 );
+
+/**
+ * Translate the navigation block's built-in labels.
+ *
+ * The site runs the English WordPress build, so the mobile menu button
+ * announces "Open menu" to screen readers. Readers here are Vietnamese.
+ *
+ * @param string $content Rendered navigation markup.
+ * @return string
+ */
+function htt_translate_nav_labels( $content ) {
+	return str_replace(
+		array( 'aria-label="Open menu"', 'aria-label="Close menu"' ),
+		array( 'aria-label="Mở menu"', 'aria-label="Đóng menu"' ),
+		$content
+	);
+}
+add_filter( 'render_block_core/navigation', 'htt_translate_nav_labels' );
+
+/**
  * Keep the current post out of the "Nội dung khác" list.
  *
  * The Query Loop block has no exclude-current option. On a single post
