@@ -262,6 +262,10 @@ body {
 	color: #FFFFFF;
 }
 
+.htt-yt-wrap {
+	margin-block: 1.5rem 0;
+}
+
 .htt-yt--abooks { background-color: var(--htt-abooks); }
 .htt-yt--bbooks { background-color: var(--htt-bbooks); }
 

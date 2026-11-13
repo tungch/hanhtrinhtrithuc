@@ -67,6 +67,134 @@ function htt_theme_no_flash() {
 add_action( 'wp_head', 'htt_theme_no_flash', 0 );
 
 /**
+ * Channel registry.
+ *
+ * One place that knows which categories are YouTube channels and where
+ * each one lives. Templates and shortcodes read from here, so adding a
+ * channel later means editing this array and nothing else.
+ *
+ * Channel URLs are stored per-category under Posts > Categories > Edit,
+ * so they can be changed without touching code.
+ *
+ * @return array<string, array{name: string, role: string}>
+ */
+function htt_channels() {
+	return array(
+		'abooks' => array(
+			'name' => 'Abooks',
+			'role' => 'Sách nói',
+		),
+		'bbooks' => array(
+			'name' => 'Bbooks',
+			'role' => 'Review sách',
+		),
+	);
+}
+
+/**
+ * Read a channel's YouTube URL from its category.
+ *
+ * @param string $slug Category slug.
+ * @return string Channel URL, or an empty string when none is set.
+ */
+function htt_channel_url( $slug ) {
+	$term = get_term_by( 'slug', $slug, 'category' );
+
+	if ( ! $term ) {
+		return '';
+	}
+
+	return (string) get_term_meta( $term->term_id, 'htt_youtube_url', true );
+}
+
+/**
+ * Add the YouTube URL field to the category edit screen.
+ *
+ * @param WP_Term $term Category being edited.
+ */
+function htt_category_field( $term ) {
+	$value = get_term_meta( $term->term_id, 'htt_youtube_url', true );
+	?>
+	<tr class="form-field">
+		<th scope="row"><label for="htt_youtube_url">Link kênh YouTube</label></th>
+		<td>
+			<input type="url" name="htt_youtube_url" id="htt_youtube_url"
+				value="<?php echo esc_attr( $value ); ?>"
+				placeholder="https://www.youtube.com/@tenkenh" style="width:100%;max-width:30rem" />
+			<p class="description">
+				Dán link kênh vào đây. Nút &ldquo;Xem trên YouTube&rdquo; chỉ hiện khi ô này có nội dung.
+			</p>
+		</td>
+	</tr>
+	<?php
+}
+add_action( 'category_edit_form_fields', 'htt_category_field' );
+
+/**
+ * Save the YouTube URL field.
+ *
+ * @param int $term_id Category being saved.
+ */
+function htt_save_category_field( $term_id ) {
+	// Nonce is verified by WordPress before this hook fires on term save.
+	if ( ! isset( $_POST['htt_youtube_url'] ) ) {
+		return;
+	}
+
+	if ( ! current_user_can( 'manage_categories' ) ) {
+		return;
+	}
+
+	$url = esc_url_raw( wp_unslash( $_POST['htt_youtube_url'] ) );
+
+	if ( '' === $url ) {
+		delete_term_meta( $term_id, 'htt_youtube_url' );
+	} else {
+		update_term_meta( $term_id, 'htt_youtube_url', $url );
+	}
+}
+add_action( 'edited_category', 'htt_save_category_field' );
+
+/**
+ * Render the "watch on YouTube" button for a post's channel.
+ *
+ * Prints nothing when the post has no channel category, or when that
+ * channel has no URL set yet - better an absent button than a dead link.
+ *
+ * @return string Button markup, or an empty string.
+ */
+function htt_youtube_button() {
+	if ( ! is_singular( 'post' ) ) {
+		return '';
+	}
+
+	foreach ( htt_channels() as $slug => $channel ) {
+		if ( ! has_category( $slug ) ) {
+			continue;
+		}
+
+		$url = htt_channel_url( $slug );
+
+		if ( '' === $url ) {
+			return '';
+		}
+
+		return sprintf(
+			'<p class="htt-yt-wrap"><a class="htt-yt htt-yt--%1$s" href="%2$s" target="_blank" rel="noopener">'
+			. '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="16" height="16">'
+			. '<path fill="currentColor" d="M8 5.5v13l11-6.5z"/></svg>'
+			. 'Xem trên kênh %3$s</a></p>',
+			esc_attr( $slug ),
+			esc_url( $url ),
+			esc_html( $channel['name'] )
+		);
+	}
+
+	return '';
+}
+add_shortcode( 'htt_youtube', 'htt_youtube_button' );
+
+/**
  * Register 16:9 image sizes.
  *
  * Every post image here is a YouTube thumbnail, which is always 16:9 and
