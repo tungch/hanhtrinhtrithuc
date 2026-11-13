@@ -127,33 +127,188 @@ function htt_category_field( $term ) {
 		</td>
 	</tr>
 	<?php
+	htt_category_image_field( $term );
 }
 add_action( 'category_edit_form_fields', 'htt_category_field' );
 
 /**
- * Save the YouTube URL field.
+ * Logo / cover image picker for a category.
+ *
+ * Readers arrive from a specific channel, so showing that channel's logo
+ * at the top of its archive tells them immediately they are in the right
+ * place.
+ *
+ * @param WP_Term $term Category being edited.
+ */
+function htt_category_image_field( $term ) {
+	$image_id = (int) get_term_meta( $term->term_id, 'htt_image_id', true );
+	$preview  = $image_id ? wp_get_attachment_image_url( $image_id, 'medium' ) : '';
+	?>
+	<tr class="form-field">
+		<th scope="row"><label for="htt_image_btn">Logo / ảnh danh mục</label></th>
+		<td>
+			<input type="hidden" name="htt_image_id" id="htt_image_id"
+				value="<?php echo esc_attr( (string) $image_id ); ?>" />
+
+			<div id="htt-image-preview" style="margin-bottom:.6rem">
+				<?php if ( $preview ) : ?>
+					<img src="<?php echo esc_url( $preview ); ?>" alt=""
+						style="max-width:160px;height:auto;border:1px solid #dcdcde;border-radius:4px;display:block" />
+				<?php endif; ?>
+			</div>
+
+			<button type="button" class="button" id="htt_image_btn">
+				<?php echo $image_id ? 'Đổi ảnh' : 'Chọn ảnh'; ?>
+			</button>
+			<button type="button" class="button-link" id="htt_image_clear"
+				style="margin-left:.6rem;color:#b32d2e<?php echo $image_id ? '' : ';display:none'; ?>">
+				Gỡ ảnh
+			</button>
+
+			<p class="description">
+				Ảnh hiện ở đầu trang danh mục. Nên dùng logo vuông hoặc ảnh ngang,
+				tối thiểu 400px. Bỏ trống thì trang danh mục không hiện ảnh.
+			</p>
+		</td>
+	</tr>
+	<?php
+}
+
+/**
+ * Load the media picker on the category edit screen.
+ *
+ * @param string $hook Current admin page.
+ */
+function htt_category_admin_assets( $hook ) {
+	if ( 'term.php' !== $hook && 'edit-tags.php' !== $hook ) {
+		return;
+	}
+
+	wp_enqueue_media();
+	wp_add_inline_script( 'jquery-core', <<<'JS'
+jQuery(function ($) {
+	var frame;
+	var $id      = $('#htt_image_id');
+	var $preview = $('#htt-image-preview');
+	var $clear   = $('#htt_image_clear');
+
+	$('#htt_image_btn').on('click', function (e) {
+		e.preventDefault();
+
+		if (frame) { frame.open(); return; }
+
+		frame = wp.media({
+			title: 'Chọn logo cho danh mục',
+			button: { text: 'Dùng ảnh này' },
+			library: { type: 'image' },
+			multiple: false
+		});
+
+		frame.on('select', function () {
+			var img = frame.state().get('selection').first().toJSON();
+			var src = (img.sizes && img.sizes.medium) ? img.sizes.medium.url : img.url;
+
+			$id.val(img.id);
+			$preview.html(
+				$('<img>').attr('src', src).attr('alt', '').css({
+					maxWidth: '160px', height: 'auto',
+					border: '1px solid #dcdcde', borderRadius: '4px', display: 'block'
+				})
+			);
+			$('#htt_image_btn').text('Đổi ảnh');
+			$clear.show();
+		});
+
+		frame.open();
+	});
+
+	$clear.on('click', function (e) {
+		e.preventDefault();
+		$id.val('');
+		$preview.empty();
+		$('#htt_image_btn').text('Chọn ảnh');
+		$(this).hide();
+	});
+});
+JS
+	);
+}
+add_action( 'admin_enqueue_scripts', 'htt_category_admin_assets' );
+
+/**
+ * Save the category's YouTube URL and logo.
  *
  * @param int $term_id Category being saved.
  */
 function htt_save_category_field( $term_id ) {
 	// Nonce is verified by WordPress before this hook fires on term save.
-	if ( ! isset( $_POST['htt_youtube_url'] ) ) {
-		return;
-	}
-
 	if ( ! current_user_can( 'manage_categories' ) ) {
 		return;
 	}
 
-	$url = esc_url_raw( wp_unslash( $_POST['htt_youtube_url'] ) );
+	if ( isset( $_POST['htt_youtube_url'] ) ) {
+		$url = esc_url_raw( wp_unslash( $_POST['htt_youtube_url'] ) );
 
-	if ( '' === $url ) {
-		delete_term_meta( $term_id, 'htt_youtube_url' );
-	} else {
-		update_term_meta( $term_id, 'htt_youtube_url', $url );
+		if ( '' === $url ) {
+			delete_term_meta( $term_id, 'htt_youtube_url' );
+		} else {
+			update_term_meta( $term_id, 'htt_youtube_url', $url );
+		}
+	}
+
+	if ( isset( $_POST['htt_image_id'] ) ) {
+		$image_id = absint( wp_unslash( $_POST['htt_image_id'] ) );
+
+		// Only accept an id that really is an image in the library.
+		if ( $image_id && wp_attachment_is_image( $image_id ) ) {
+			update_term_meta( $term_id, 'htt_image_id', $image_id );
+		} else {
+			delete_term_meta( $term_id, 'htt_image_id' );
+		}
 	}
 }
 add_action( 'edited_category', 'htt_save_category_field' );
+
+/**
+ * Render a category's logo above its archive.
+ *
+ * Prints nothing when no image is set, so a category without a logo
+ * simply starts with its title.
+ *
+ * @return string Image markup, or an empty string.
+ */
+function htt_category_image() {
+	if ( ! is_category() ) {
+		return '';
+	}
+
+	$term     = get_queried_object();
+	$image_id = $term ? (int) get_term_meta( $term->term_id, 'htt_image_id', true ) : 0;
+
+	if ( ! $image_id || ! wp_attachment_is_image( $image_id ) ) {
+		return '';
+	}
+
+	$alt = (string) get_post_meta( $image_id, '_wp_attachment_image_alt', true );
+
+	if ( '' === $alt ) {
+		$alt = sprintf( 'Logo %s', $term->name );
+	}
+
+	$img = wp_get_attachment_image(
+		$image_id,
+		'medium',
+		false,
+		array(
+			'class'   => 'htt-cat-logo',
+			'alt'     => $alt,
+			'loading' => 'eager',
+		)
+	);
+
+	return $img ? '<div class="htt-cat-logo-wrap">' . $img . '</div>' : '';
+}
+add_shortcode( 'htt_cat_image', 'htt_category_image' );
 
 /**
  * Register the per-post video URL field.
