@@ -176,6 +176,72 @@ body {
 .wp-block-post-terms a:hover { text-decoration: underline; }
 
 /* ==========================================================================
+   Hang loc theo kenh tren trang chu
+   ========================================================================== */
+
+.htt-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .4rem;
+}
+
+.htt-chip--all {
+	background-color: var(--htt-surface);
+	color: var(--htt-ink-2);
+	border: 1px solid var(--htt-rule);
+}
+
+.htt-chip--all[aria-current="page"] {
+	background-color: var(--htt-ink);
+	color: var(--htt-bg);
+	border-color: var(--htt-ink);
+}
+
+.htt-chip:focus-visible {
+	outline: 2px solid var(--htt-b-text);
+	outline-offset: 2px;
+}
+
+/* ==========================================================================
+   The bai viet trong luoi
+
+   Cac block roi rac trong post-template duoc gom lai thanh mot the co
+   khoang cach hop ly, thay vi tron noi nhau.
+   ========================================================================== */
+
+.wp-block-post-template .wp-block-post {
+	display: flex;
+	flex-direction: column;
+	gap: .4rem;
+}
+
+.wp-block-post-template .wp-block-post-title {
+	margin: 0;
+	line-height: 1.3;
+}
+
+.wp-block-post-template .wp-block-post-title a {
+	text-decoration: none;
+	color: var(--htt-ink);
+}
+
+.wp-block-post-template .wp-block-post-title a:hover,
+.wp-block-post-template .wp-block-post-title a:focus-visible {
+	text-decoration: underline;
+}
+
+.wp-block-post-template .wp-block-post-date,
+.wp-block-post-template .wp-block-post-terms {
+	margin: 0;
+}
+
+/* Khong co anh dai dien thi chua mot o giu cho dung ty le, de luoi
+   khong bi xo lech giua bai co anh va bai khong anh. */
+.wp-block-post-template .wp-block-post-featured-image {
+	margin: 0;
+}
+
+/* ==========================================================================
    Nut dan ve YouTube
 
    Site phuc vu kenh chu khong tranh nguoi xem voi kenh, nen moi bai deu
