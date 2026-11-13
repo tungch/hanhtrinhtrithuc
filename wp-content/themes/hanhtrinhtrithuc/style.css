@@ -482,6 +482,46 @@ body {
 	border-block-start: 0;
 }
 
+/* Tra loi thut vao, co duong doc noi voi binh luan cha */
+.htt-comments .wp-block-comment-template ol {
+	list-style: none;
+	margin: 0;
+	padding-inline-start: 1.3rem;
+	border-inline-start: 2px solid var(--htt-rule-soft);
+}
+
+.htt-comments .wp-block-comment-template ol > li:first-child {
+	border-block-start: 1px solid var(--htt-rule-soft);
+}
+
+.htt-comments .wp-block-avatar img {
+	display: block;
+	border-radius: 999px;
+}
+
+.htt-comments .wp-block-comment-content p {
+	margin-block: .35rem 0;
+}
+
+.htt-comments .wp-block-comment-reply-link a {
+	color: var(--htt-muted);
+	text-decoration: none;
+	font-size: var(--wp--preset--font-size--small);
+}
+
+.htt-comments .wp-block-comment-reply-link a:hover,
+.htt-comments .wp-block-comment-reply-link a:focus-visible {
+	color: var(--htt-b-text);
+	text-decoration: underline;
+}
+
+/* Tren dien thoai giam thut le de con cho cho chu */
+@media (max-width: 30rem) {
+	.htt-comments .wp-block-comment-template ol {
+		padding-inline-start: .7rem;
+	}
+}
+
 .htt-comments input[type="text"],
 .htt-comments input[type="email"],
 .htt-comments input[type="url"],
