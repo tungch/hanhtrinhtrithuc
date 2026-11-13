@@ -254,6 +254,136 @@ body {
 }
 
 /* ==========================================================================
+   Testimonial - cau noi cua cac vi nhan
+
+   Cac slide xep chong len nhau trong cung mot o luoi, nen khung khong
+   nhay chieu cao khi doi cau noi dai ngan khac nhau.
+   ========================================================================== */
+
+.htt-quotes {
+	margin-block: 2.5rem;
+	padding: 2rem 1.25rem 1.5rem;
+	border: 1px solid var(--htt-rule);
+	border-radius: 10px;
+	background-color: var(--htt-bg-sunk);
+}
+
+.htt-quotes__viewport {
+	display: grid;
+}
+
+.htt-quotes__slide {
+	grid-area: 1 / 1;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: .9rem;
+	text-align: center;
+	opacity: 0;
+	visibility: hidden;
+}
+
+.htt-quotes__slide.is-active {
+	opacity: 1;
+	visibility: visible;
+}
+
+/* Truoc khi JavaScript chay, chi hien slide dau - tranh nhay
+   toan bo cau noi roi thu lai. */
+.htt-quotes:not(.is-ready) .htt-quotes__slide:not(.is-active) {
+	display: none;
+}
+
+.htt-quotes__photo-wrap {
+	flex: none;
+}
+
+.htt-quotes__photo {
+	display: block;
+	width: 4.5rem;
+	height: 4.5rem;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 2px solid var(--htt-surface);
+	box-shadow: 0 0 0 1px var(--htt-rule);
+}
+
+.htt-quotes__text {
+	margin: 0;
+	max-width: 34rem;
+	border: 0;
+	padding: 0;
+	font-size: var(--wp--preset--font-size--large);
+	line-height: 1.55;
+	color: var(--htt-ink);
+	text-wrap: pretty;
+}
+
+.htt-quotes__text p {
+	margin: 0;
+}
+
+/* Dau ngoac kep o hai dau, de CSS lo thay vi go tay vao noi dung */
+.htt-quotes__text p::before { content: "\201C"; }
+.htt-quotes__text p::after  { content: "\201D"; }
+
+.htt-quotes__name {
+	font-family: var(--wp--preset--font-family--manrope);
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: 700;
+	letter-spacing: .06em;
+	text-transform: uppercase;
+	color: var(--htt-muted);
+}
+
+.htt-quotes__dots {
+	display: flex;
+	justify-content: center;
+	gap: .5rem;
+	margin-block-start: 1.4rem;
+}
+
+.htt-quotes__dot {
+	width: .55rem;
+	height: .55rem;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background-color: var(--htt-rule);
+	cursor: pointer;
+}
+
+.htt-quotes__dot.is-active {
+	background-color: var(--htt-a-text);
+}
+
+.htt-quotes__dot:focus-visible {
+	outline: 2px solid var(--htt-b-text);
+	outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.htt-quotes__slide {
+		transition: opacity .45s ease, visibility .45s;
+	}
+
+	.htt-quotes__dot {
+		transition: background-color .2s ease;
+	}
+}
+
+@media (max-width: 30rem) {
+	.htt-quotes {
+		padding: 1.5rem 1rem 1.25rem;
+	}
+
+	.htt-quotes__text {
+		font-size: var(--wp--preset--font-size--medium);
+	}
+}
+
+/* ==========================================================================
    The bai viet trong luoi
 
    Cac block roi rac trong post-template duoc gom lai thanh mot the co

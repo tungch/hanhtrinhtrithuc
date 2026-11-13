@@ -46,6 +46,22 @@ function htt_enqueue_scripts() {
 		true
 	);
 
+	// Quote slider only runs on the homepage.
+	if ( is_home() || is_front_page() ) {
+		$q_rel  = '/assets/js/quotes.js';
+		$q_path = get_stylesheet_directory() . $q_rel;
+
+		if ( file_exists( $q_path ) ) {
+			wp_enqueue_script(
+				'htt-quotes',
+				get_stylesheet_directory_uri() . $q_rel,
+				array(),
+				(string) filemtime( $q_path ),
+				true
+			);
+		}
+	}
+
 	// Share buttons only exist on single posts.
 	if ( is_singular( 'post' ) ) {
 		$share_rel  = '/assets/js/share.js';
@@ -546,6 +562,229 @@ function htt_meta_tags() {
 	}
 }
 add_action( 'wp_head', 'htt_meta_tags', 5 );
+
+/**
+ * Register the "Câu nói" post type.
+ *
+ * Quotes live in their own list rather than inside the homepage layout,
+ * so adding or removing one never risks breaking the page, and the same
+ * quotes can be reused elsewhere later.
+ */
+function htt_register_quote_type() {
+	register_post_type(
+		'htt_quote',
+		array(
+			'labels'          => array(
+				'name'               => 'Câu nói',
+				'singular_name'      => 'Câu nói',
+				'add_new'            => 'Thêm câu nói',
+				'add_new_item'       => 'Thêm câu nói mới',
+				'edit_item'          => 'Sửa câu nói',
+				'new_item'           => 'Câu nói mới',
+				'view_item'          => 'Xem câu nói',
+				'search_items'       => 'Tìm câu nói',
+				'not_found'          => 'Chưa có câu nói nào',
+				'not_found_in_trash' => 'Thùng rác trống',
+				'all_items'          => 'Tất cả câu nói',
+				'menu_name'          => 'Câu nói',
+			),
+			'public'          => false,
+			'show_ui'         => true,
+			'show_in_menu'    => true,
+			'show_in_rest'    => true,
+			'menu_position'   => 21,
+			'menu_icon'       => 'dashicons-format-quote',
+			'supports'        => array( 'title', 'editor', 'thumbnail', 'page-attributes' ),
+			'has_archive'     => false,
+			'rewrite'         => false,
+			'capability_type' => 'post',
+		)
+	);
+}
+add_action( 'init', 'htt_register_quote_type' );
+
+/**
+ * Rename the editor labels so the fields read as what they hold.
+ *
+ * @param array $labels Default post labels.
+ * @return array
+ */
+function htt_quote_enter_title( $title ) {
+	if ( 'htt_quote' === get_post_type() ) {
+		return 'Tên vĩ nhân';
+	}
+
+	return $title;
+}
+add_filter( 'enter_title_here', 'htt_quote_enter_title' );
+
+/**
+ * Rename the featured-image box for quotes.
+ */
+function htt_quote_thumbnail_label() {
+	remove_meta_box( 'postimagediv', 'htt_quote', 'side' );
+	add_meta_box(
+		'postimagediv',
+		'Ảnh chân dung',
+		'post_thumbnail_meta_box',
+		'htt_quote',
+		'side',
+		'high'
+	);
+}
+add_action( 'do_meta_boxes', 'htt_quote_thumbnail_label' );
+
+/**
+ * Columns for the quote list screen.
+ *
+ * @param array $cols Existing columns.
+ * @return array
+ */
+function htt_quote_columns( $cols ) {
+	return array(
+		'cb'         => $cols['cb'] ?? '',
+		'htt_thumb'  => 'Ảnh',
+		'title'      => 'Tên vĩ nhân',
+		'htt_quote'  => 'Câu nói',
+		'menu_order' => 'Thứ tự',
+		'date'       => $cols['date'] ?? 'Ngày',
+	);
+}
+add_filter( 'manage_htt_quote_posts_columns', 'htt_quote_columns' );
+
+/**
+ * Fill the custom columns.
+ *
+ * @param string $col Column key.
+ * @param int    $post_id Post being listed.
+ */
+function htt_quote_column_content( $col, $post_id ) {
+	if ( 'htt_thumb' === $col ) {
+		$thumb = get_the_post_thumbnail( $post_id, array( 48, 48 ), array( 'style' => 'border-radius:50%' ) );
+		echo $thumb ? wp_kses_post( $thumb ) : '—';
+		return;
+	}
+
+	if ( 'htt_quote' === $col ) {
+		$text = wp_strip_all_tags( get_post_field( 'post_content', $post_id ) );
+		echo esc_html( mb_strimwidth( trim( $text ), 0, 90, '…' ) );
+		return;
+	}
+
+	if ( 'menu_order' === $col ) {
+		echo (int) get_post_field( 'menu_order', $post_id );
+	}
+}
+add_action( 'manage_htt_quote_posts_custom_column', 'htt_quote_column_content', 10, 2 );
+
+/**
+ * Order the quote list by the manual order field.
+ *
+ * @param WP_Query $query Current admin query.
+ */
+function htt_quote_admin_order( $query ) {
+	if ( ! is_admin() || ! $query->is_main_query() ) {
+		return;
+	}
+
+	if ( 'htt_quote' !== $query->get( 'post_type' ) ) {
+		return;
+	}
+
+	if ( ! $query->get( 'orderby' ) ) {
+		$query->set( 'orderby', 'menu_order title' );
+		$query->set( 'order', 'ASC' );
+	}
+}
+add_action( 'pre_get_posts', 'htt_quote_admin_order' );
+
+/**
+ * Render the auto-advancing quote slider.
+ *
+ * Prints nothing when no quotes exist, so the homepage simply skips the
+ * section until the first quote is added.
+ *
+ * @param array $atts Shortcode attributes.
+ * @return string
+ */
+function htt_quotes_slider( $atts = array() ) {
+	$atts = shortcode_atts(
+		array(
+			'interval' => 3000,
+			'limit'    => 12,
+		),
+		$atts,
+		'htt_quotes'
+	);
+
+	$quotes = get_posts(
+		array(
+			'post_type'      => 'htt_quote',
+			'post_status'    => 'publish',
+			'posts_per_page' => (int) $atts['limit'],
+			'orderby'        => array(
+				'menu_order' => 'ASC',
+				'date'       => 'DESC',
+			),
+		)
+	);
+
+	if ( ! $quotes ) {
+		return '';
+	}
+
+	$interval = max( 1500, (int) $atts['interval'] );
+
+	ob_start();
+	?>
+	<section class="htt-quotes" aria-roledescription="carousel" aria-label="Câu nói của các vĩ nhân"
+		data-htt-quotes data-interval="<?php echo esc_attr( (string) $interval ); ?>">
+
+		<div class="htt-quotes__viewport">
+			<?php foreach ( $quotes as $index => $quote ) : ?>
+				<?php
+				$text  = wp_strip_all_tags( $quote->post_content );
+				$text  = trim( preg_replace( '/\s+/', ' ', $text ) );
+				$photo = get_the_post_thumbnail(
+					$quote->ID,
+					array( 96, 96 ),
+					array(
+						'class'   => 'htt-quotes__photo',
+						'alt'     => sprintf( 'Ảnh %s', $quote->post_title ),
+						'loading' => 0 === $index ? 'eager' : 'lazy',
+					)
+				);
+				?>
+				<figure class="htt-quotes__slide<?php echo 0 === $index ? ' is-active' : ''; ?>"
+					role="group" aria-roledescription="slide"
+					aria-label="<?php echo esc_attr( sprintf( '%d trong %d', $index + 1, count( $quotes ) ) ); ?>"
+					<?php echo 0 === $index ? '' : 'aria-hidden="true"'; ?>>
+
+					<?php if ( $photo ) : ?>
+						<div class="htt-quotes__photo-wrap"><?php echo wp_kses_post( $photo ); ?></div>
+					<?php endif; ?>
+
+					<blockquote class="htt-quotes__text"><p><?php echo esc_html( $text ); ?></p></blockquote>
+					<figcaption class="htt-quotes__name"><?php echo esc_html( $quote->post_title ); ?></figcaption>
+				</figure>
+			<?php endforeach; ?>
+		</div>
+
+		<?php if ( count( $quotes ) > 1 ) : ?>
+			<div class="htt-quotes__dots" role="tablist" aria-label="Chọn câu nói">
+				<?php foreach ( $quotes as $index => $quote ) : ?>
+					<button type="button" class="htt-quotes__dot<?php echo 0 === $index ? ' is-active' : ''; ?>"
+						role="tab" aria-selected="<?php echo 0 === $index ? 'true' : 'false'; ?>"
+						aria-label="<?php echo esc_attr( sprintf( 'Câu nói của %s', $quote->post_title ) ); ?>"
+						data-index="<?php echo esc_attr( (string) $index ); ?>"></button>
+				<?php endforeach; ?>
+			</div>
+		<?php endif; ?>
+	</section>
+	<?php
+	return (string) ob_get_clean();
+}
+add_shortcode( 'htt_quotes', 'htt_quotes_slider' );
 
 /**
  * Output Schema.org structured data for single posts.
