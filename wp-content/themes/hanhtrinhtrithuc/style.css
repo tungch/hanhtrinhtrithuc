@@ -489,34 +489,24 @@ body {
 
 /* O bai dau va bai cuoi, WordPress van xuat the <div> nhung khong co
    <a> ben trong. De nguyen se thanh mot o vien rong trong nhu loi.
-   An han o do, va de o con lai giu nguyen ben cua no thay vi gian
-   ra giua. */
+
+   Khong dung display:none ma bo het phan trang tri: o van chiem cho
+   nhung vo hinh. Cach nay giu o con lai dung ben cua no va dung 50%
+   do rong ma khong phai chong lai justify-content:space-between do
+   WordPress tu sinh ra (CSS do nap sau style.css nen se thang). */
 .htt-post-nav .wp-block-post-navigation-link:not(:has(a)) {
-	display: none;
+	border-color: transparent;
+	background-color: transparent;
+	padding-block: 0;
+	pointer-events: none;
 }
 
-.htt-post-nav:has(.post-navigation-link-next:not(:has(a))) {
-	justify-content: flex-start;
-}
-
-.htt-post-nav:has(.post-navigation-link-previous:not(:has(a))) {
-	justify-content: flex-end;
-}
-
-/* Chi con mot o thi no khong nen keo dai het chieu ngang - giu
-   do rong tuong duong luc co ca hai.
-   max() de tren man hinh rat hep o van du cho cho tieu de. */
-.htt-post-nav:has(.wp-block-post-navigation-link:not(:has(a)))
-	.wp-block-post-navigation-link:has(a) {
-	flex: 0 1 max(13rem, calc(50% - .75rem));
-	max-width: 100%;
-}
-
-/* Trinh duyet cu khong ho tro :has() - o rong se khong co vien,
-   nen van khong lo ra khung trong. */
+/* Trinh duyet cu khong ho tro :has(): o rong van khong lo vien */
 @supports not selector(:has(a)) {
 	.htt-post-nav .wp-block-post-navigation-link:empty {
-		display: none;
+		border-color: transparent;
+		background-color: transparent;
+		padding-block: 0;
 	}
 }
 
@@ -556,12 +546,15 @@ body {
 }
 
 /* Man hinh hep: hai o xep chong, moi o chiem tron chieu ngang.
-   Chi ap dung khi co DU ca hai o - neu chi con mot o thi quy tac
-   gioi han 50% o tren phai thang, nen loai truong hop do ra. */
+   O rong (neu co) khong co vien nen khong de lai khoang trong. */
 @media (max-width: 34rem) {
-	.htt-post-nav:not(:has(.wp-block-post-navigation-link:not(:has(a))))
-		.wp-block-post-navigation-link {
+	.htt-post-nav .wp-block-post-navigation-link {
 		flex: 1 1 100%;
+	}
+
+	/* O rong khong can chiem mot hang rieng khi da xep chong */
+	.htt-post-nav .wp-block-post-navigation-link:not(:has(a)) {
+		display: none;
 	}
 }
 
