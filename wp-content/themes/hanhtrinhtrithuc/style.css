@@ -254,6 +254,64 @@ body {
 }
 
 /* ==========================================================================
+   Link "Xem tat ca bai viet" duoi luoi trang chu
+   ========================================================================== */
+
+.htt-all-posts {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: .6rem;
+	margin-block: 2rem 0;
+}
+
+.htt-all-posts__link {
+	display: inline-flex;
+	align-items: center;
+	gap: .45em;
+	padding: .6em 1.2em;
+	border: 1px solid var(--htt-rule);
+	border-radius: 6px;
+	background-color: var(--htt-surface);
+	color: var(--htt-ink-2);
+	font-family: var(--wp--preset--font-family--manrope);
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: 650;
+	text-decoration: none;
+	line-height: 1.4;
+}
+
+.htt-all-posts__link:hover,
+.htt-all-posts__link:focus-visible {
+	border-color: var(--htt-b-text);
+	color: var(--htt-b-text);
+	text-decoration: none;
+}
+
+/* Khi tach theo kenh, moi nut mang mau cua kenh do khi ro chuot */
+.htt-all-posts__link--abooks:hover,
+.htt-all-posts__link--abooks:focus-visible {
+	border-color: var(--htt-a-text);
+	color: var(--htt-a-text);
+}
+
+.htt-all-posts__link--bbooks:hover,
+.htt-all-posts__link--bbooks:focus-visible {
+	border-color: var(--htt-b-text);
+	color: var(--htt-b-text);
+}
+
+.htt-all-posts__link svg {
+	flex: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.htt-all-posts__link {
+		transition: border-color .15s ease, color .15s ease;
+	}
+}
+
+/* ==========================================================================
    Testimonial - cau noi cua cac vi nhan
 
    Cac slide xep chong len nhau trong cung mot o luoi, nen khung khong

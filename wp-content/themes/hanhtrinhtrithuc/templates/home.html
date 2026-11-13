@@ -25,7 +25,7 @@
 	</div>
 	<!-- /wp:group -->
 
-	<!-- wp:query {"queryId":30,"query":{"perPage":12,"pages":0,"offset":0,"postType":"post","order":"desc","orderBy":"date","sticky":"exclude","inherit":false},"layout":{"type":"default"}} -->
+	<!-- wp:query {"queryId":30,"query":{"perPage":6,"pages":1,"offset":0,"postType":"post","order":"desc","orderBy":"date","sticky":"exclude","inherit":false},"layout":{"type":"default"}} -->
 	<div class="wp-block-query">
 
 		<!-- wp:post-template {"layout":{"type":"grid","columnCount":2,"minimumColumnWidth":"20rem"},"style":{"spacing":{"blockGap":"var:preset|spacing|40"}}} -->
@@ -41,14 +41,12 @@
 			<!-- /wp:paragraph -->
 		<!-- /wp:query-no-results -->
 
-		<!-- wp:query-pagination {"paginationArrow":"arrow","layout":{"type":"flex","justifyContent":"space-between"},"style":{"spacing":{"margin":{"top":"var:preset|spacing|50"}}},"fontSize":"small"} -->
-			<!-- wp:query-pagination-previous {"label":"Trang trước"} /-->
-			<!-- wp:query-pagination-numbers /-->
-			<!-- wp:query-pagination-next {"label":"Trang sau"} /-->
-		<!-- /wp:query-pagination -->
-
 	</div>
 	<!-- /wp:query -->
+
+	<!-- wp:shortcode -->
+	[htt_all_posts]
+	<!-- /wp:shortcode -->
 
 	<!-- wp:shortcode -->
 	[htt_quotes interval="3000"]

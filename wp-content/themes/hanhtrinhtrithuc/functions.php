@@ -564,6 +564,68 @@ function htt_meta_tags() {
 add_action( 'wp_head', 'htt_meta_tags', 5 );
 
 /**
+ * "Xem tất cả bài viết" link under the homepage grid.
+ *
+ * The homepage shows only the newest six posts, so readers need a way
+ * through to the rest. Prints nothing when there is no rest to see.
+ *
+ * @param array $atts Shortcode attributes.
+ * @return string
+ */
+function htt_all_posts_link( $atts = array() ) {
+	$atts = shortcode_atts( array( 'shown' => 6 ), $atts, 'htt_all_posts' );
+
+	$total = (int) wp_count_posts( 'post' )->publish;
+
+	if ( $total <= (int) $atts['shown'] ) {
+		return '';
+	}
+
+	// A dedicated posts page is the only archive that lists everything.
+	// Without one the "archive" is the homepage itself, which this link
+	// sits on - so fall back to the channel archives instead of pointing
+	// the reader back where they already are.
+	$posts_page = (int) get_option( 'page_for_posts' );
+
+	if ( $posts_page ) {
+		return sprintf(
+			'<p class="htt-all-posts"><a class="htt-all-posts__link" href="%s">Xem tất cả bài viết'
+			. '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="16" height="16">'
+			. '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+			. ' stroke-linejoin="round" d="M5 12h13M12.5 6l6 6-6 6"/></svg></a></p>',
+			esc_url( get_permalink( $posts_page ) )
+		);
+	}
+
+	$links = array();
+
+	foreach ( htt_channels() as $slug => $channel ) {
+		$term = get_term_by( 'slug', $slug, 'category' );
+
+		if ( ! $term || ! $term->count ) {
+			continue;
+		}
+
+		$links[] = sprintf(
+			'<a class="htt-all-posts__link htt-all-posts__link--%1$s" href="%2$s">Xem tất cả %3$s'
+			. '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="16" height="16">'
+			. '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+			. ' stroke-linejoin="round" d="M5 12h13M12.5 6l6 6-6 6"/></svg></a>',
+			esc_attr( $slug ),
+			esc_url( get_term_link( $term ) ),
+			esc_html( $channel['name'] )
+		);
+	}
+
+	if ( ! $links ) {
+		return '';
+	}
+
+	return '<p class="htt-all-posts">' . implode( '', $links ) . '</p>';
+}
+add_shortcode( 'htt_all_posts', 'htt_all_posts_link' );
+
+/**
  * Register the "Câu nói" post type.
  *
  * Quotes live in their own list rather than inside the homepage layout,
