@@ -21,6 +21,13 @@ wp-config.php
 /wp-content/plugins/akismet/
 /wp-content/plugins/hello.php
 
+# Plugin chi dung o may local, khong day len hosting
+/wp-content/plugins/duplicator/
+/wp-content/duplicator-backups/
+
+# Goi ngon ngu - WordPress tu tai ve, khong can version (4 MB)
+/wp-content/languages/
+
 # Log va file tam
 /wp-content/debug.log
 *.log

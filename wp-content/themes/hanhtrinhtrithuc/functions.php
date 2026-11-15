@@ -509,6 +509,208 @@ add_shortcode( 'htt_youtube', 'htt_youtube_button' );
  * and Messenger. Without these tags a shared link shows no preview image
  * and no summary, which costs clicks on exactly the path that matters.
  */
+/**
+ * Rebuild menu links from their term/post id instead of the stored URL.
+ *
+ * The navigation-link block renders whatever URL was saved when the item
+ * was created, so a menu built on one domain keeps pointing at it. The
+ * items do carry the term or post id, so the real address can be looked
+ * up at render time and the stored URL ignored.
+ *
+ * Only items WordPress resolved to real content are touched; custom
+ * links stay exactly as written, apart from the home link.
+ *
+ * @param array $attributes Block attributes.
+ * @return array
+ */
+function htt_navigation_link_url( $attributes ) {
+	if ( empty( $attributes['kind'] ) || empty( $attributes['id'] ) ) {
+		return $attributes;
+	}
+
+	if ( 'taxonomy' === $attributes['kind'] ) {
+		$link = get_term_link( (int) $attributes['id'] );
+
+		if ( ! is_wp_error( $link ) ) {
+			$attributes['url'] = $link;
+		}
+	} elseif ( 'post-type' === $attributes['kind'] ) {
+		$link = get_permalink( (int) $attributes['id'] );
+
+		if ( $link ) {
+			$attributes['url'] = $link;
+		}
+	}
+
+	return $attributes;
+}
+
+/**
+ * Keep the "Trang chủ" custom link pointing at the current domain.
+ *
+ * It is stored as a custom link with the full URL baked in, so it needs
+ * handling separately from the id-based items above.
+ *
+ * @param array $attributes Block attributes.
+ * @return array
+ */
+function htt_navigation_home_url( $attributes ) {
+	if ( empty( $attributes['url'] ) || 'custom' !== ( $attributes['kind'] ?? '' ) ) {
+		return $attributes;
+	}
+
+	$url = (string) $attributes['url'];
+
+	// Leave anything pointing at another site alone.
+	$host = (string) wp_parse_url( $url, PHP_URL_HOST );
+
+	if ( '' !== $host && $host !== (string) wp_parse_url( home_url(), PHP_URL_HOST )
+		&& ! in_array( $host, array( 'localhost', '127.0.0.1' ), true ) ) {
+		return $attributes;
+	}
+
+	// A home link carries no query, no fragment, and a path that is
+	// either empty or just the folder WordPress is installed in.
+	if ( wp_parse_url( $url, PHP_URL_QUERY ) || wp_parse_url( $url, PHP_URL_FRAGMENT ) ) {
+		return $attributes;
+	}
+
+	$path    = trim( (string) wp_parse_url( $url, PHP_URL_PATH ), '/' );
+	$install = trim( (string) wp_parse_url( home_url(), PHP_URL_PATH ), '/' );
+
+	if ( '' === $path || $path === $install || 'hanhtrinhtrithuc' === $path ) {
+		$attributes['url'] = home_url( '/' );
+	}
+
+	return $attributes;
+}
+
+/**
+ * Apply the URL rewrite to every link inside the navigation block.
+ *
+ * Navigation renders its children itself, so the usual per-block filter
+ * never sees them; this hook hands over the inner blocks instead.
+ *
+ * @param WP_Block_List $inner_blocks Navigation children.
+ * @return WP_Block_List
+ */
+function htt_navigation_inner_blocks( $inner_blocks ) {
+	foreach ( $inner_blocks as $block ) {
+		if ( 'core/navigation-link' !== $block->name ) {
+			continue;
+		}
+
+		$attrs = htt_navigation_link_url( $block->attributes );
+		$attrs = htt_navigation_home_url( $attrs );
+
+		$block->attributes = $attrs;
+	}
+
+	return $inner_blocks;
+}
+add_filter( 'block_core_navigation_render_inner_blocks', 'htt_navigation_inner_blocks' );
+
+/**
+ * How many images stay eagerly loaded before lazy-loading kicks in.
+ *
+ * Core keeps the first three eager on the assumption they sit above the
+ * fold. That holds for the two-column grid on the homepage and archives,
+ * but not for a single post: there the only image near the top is the
+ * featured one, and everything after it belongs to the "Nội dung khác"
+ * grid at the very bottom.
+ *
+ * Note this threshold is also what decides which image gets
+ * fetchpriority="high", so dropping it to zero would cost the LCP hint.
+ *
+ * @param int $threshold Default number of images to skip.
+ * @return int
+ */
+function htt_loading_threshold( $threshold ) {
+	if ( is_singular( 'post' ) ) {
+		return 1;
+	}
+
+	return $threshold;
+}
+add_filter( 'wp_omit_loading_attr_threshold', 'htt_loading_threshold' );
+
+/**
+ * Render the comment form heading as an h2.
+ *
+ * Core wraps "Để lại bình luận" in an h3. The comments title above it is
+ * an h2, but that only prints once a post actually has comments - so on a
+ * post with none the h3 follows the h1 directly and the outline skips a
+ * level.
+ *
+ * @param array $defaults Comment form arguments.
+ * @return array
+ */
+function htt_comment_form_heading( $defaults ) {
+	$defaults['title_reply_before'] = '<h2 id="reply-title" class="comment-reply-title">';
+	$defaults['title_reply_after']  = '</h2>';
+
+	return $defaults;
+}
+add_filter( 'comment_form_defaults', 'htt_comment_form_heading' );
+
+/**
+ * Canonical URL for archive views.
+ *
+ * WordPress only prints a canonical tag on singular views, so category,
+ * tag, author and date archives have none - search engines then have to
+ * guess which of several URLs listing the same posts is the real one.
+ *
+ * Paged archives point at themselves, not page one: /page/2/ lists
+ * different posts, so collapsing it onto page one would hide them.
+ *
+ * Search results and 404s are deliberately skipped - they are noindex
+ * territory and have no canonical form worth advertising.
+ *
+ * @return void
+ */
+function htt_canonical_tag() {
+	// Singular views already get one from core's rel_canonical().
+	if ( is_singular() || is_search() || is_404() ) {
+		return;
+	}
+
+	if ( is_front_page() ) {
+		$url = home_url( '/' );
+	} elseif ( is_home() ) {
+		$url = get_permalink( (int) get_option( 'page_for_posts' ) );
+	} elseif ( is_category() || is_tag() || is_tax() ) {
+		$term = get_queried_object();
+		$link = $term ? get_term_link( $term ) : '';
+		$url  = is_wp_error( $link ) ? '' : $link;
+	} elseif ( is_author() ) {
+		$url = get_author_posts_url( (int) get_query_var( 'author' ) );
+	} elseif ( is_year() ) {
+		$url = get_year_link( (int) get_query_var( 'year' ) );
+	} elseif ( is_month() ) {
+		$url = get_month_link( (int) get_query_var( 'year' ), (int) get_query_var( 'monthnum' ) );
+	} elseif ( is_day() ) {
+		$url = get_day_link(
+			(int) get_query_var( 'year' ),
+			(int) get_query_var( 'monthnum' ),
+			(int) get_query_var( 'day' )
+		);
+	} else {
+		return;
+	}
+
+	if ( ! $url ) {
+		return;
+	}
+
+	$paged = (int) get_query_var( 'paged' );
+
+	if ( $paged > 1 ) {
+		$url = trailingslashit( $url ) . 'page/' . $paged . '/';
+	}
+
+	printf( '<link rel="canonical" href="%s" />' . "\n", esc_url( $url ) );
+}
+
 function htt_meta_tags() {
 	if ( is_singular( 'post' ) ) {
 		$post_id = get_the_ID();
@@ -545,6 +747,8 @@ function htt_meta_tags() {
 		printf( '<meta property="og:description" content="%s" />' . "\n", esc_attr( $desc ) );
 		printf( '<meta name="twitter:description" content="%s" />' . "\n", esc_attr( $desc ) );
 	}
+
+	htt_canonical_tag();
 
 	printf( '<meta property="og:title" content="%s" />' . "\n", esc_attr( $title ) );
 	printf( '<meta property="og:type" content="%s" />' . "\n", esc_attr( $type ) );
@@ -624,6 +828,80 @@ function htt_all_posts_link( $atts = array() ) {
 	return '<p class="htt-all-posts">' . implode( '', $links ) . '</p>';
 }
 add_shortcode( 'htt_all_posts', 'htt_all_posts_link' );
+
+/**
+ * Channel filter chips for the homepage.
+ *
+ * Block template files are static HTML, so the links have to come from a
+ * shortcode - otherwise the site URL ends up hardcoded and breaks the day
+ * the site moves to a real domain.
+ *
+ * @return string
+ */
+function htt_filter_chips() {
+	$chips = array(
+		sprintf(
+			'<a class="htt-chip htt-chip--all" href="%s" aria-current="page">Tất cả</a>',
+			esc_url( home_url( '/' ) )
+		),
+	);
+
+	foreach ( htt_channels() as $slug => $channel ) {
+		$term = get_term_by( 'slug', $slug, 'category' );
+
+		if ( ! $term ) {
+			continue;
+		}
+
+		$chips[] = sprintf(
+			'<a class="htt-chip htt-chip--%1$s" href="%2$s">%3$s</a>',
+			esc_attr( $slug ),
+			esc_url( get_term_link( $term ) ),
+			esc_html( $channel['name'] )
+		);
+	}
+
+	return '<nav class="htt-filters" aria-label="Lọc theo kênh">'
+		. implode( '', $chips )
+		. '</nav>';
+}
+add_shortcode( 'htt_filters', 'htt_filter_chips' );
+
+/**
+ * Channel logos in the footer.
+ *
+ * The logo itself is a CSS background image; the anchor only carries the
+ * channel name for screen readers.
+ *
+ * @return string
+ */
+function htt_footer_channels() {
+	$links = array();
+
+	foreach ( htt_channels() as $slug => $channel ) {
+		$term = get_term_by( 'slug', $slug, 'category' );
+
+		if ( ! $term ) {
+			continue;
+		}
+
+		$links[] = sprintf(
+			'<a class="htt-footer-channel htt-footer-channel--%1$s" href="%2$s">'
+			. '<span class="screen-reader-text">%3$s — %4$s</span></a>',
+			esc_attr( $slug ),
+			esc_url( get_term_link( $term ) ),
+			esc_html( $channel['name'] ),
+			esc_html( $channel['role'] )
+		);
+	}
+
+	if ( ! $links ) {
+		return '';
+	}
+
+	return '<div class="htt-footer-channels">' . implode( '', $links ) . '</div>';
+}
+add_shortcode( 'htt_footer_channels', 'htt_footer_channels' );
 
 /**
  * Register the "Câu nói" post type.

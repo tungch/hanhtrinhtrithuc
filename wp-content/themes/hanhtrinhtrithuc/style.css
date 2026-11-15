@@ -876,3 +876,146 @@ body {
 .wp-block-post-content {
 	max-width: 40rem;
 }
+
+/* ==========================================================================
+   Header: giu cum nut doi che do nen luon nam ben phai
+   ========================================================================== */
+
+/*
+ * Hang tren cung cua header gom hai nhom: (tieu de) va (menu + nut doi nen),
+ * can deu bang space-between. WordPress mac dinh cho hang nay flex-wrap: wrap,
+ * nen khi tieu de va menu rong hon vung noi dung thi hang bi xuong dong:
+ * tieu de o dong 1, menu + nut o dong 2. Luc do space-between chi con mot
+ * phan tu tren moi dong nen cum nut bi keo ve sat le trai.
+ */
+
+/* Desktop: khoa khong cho xuong dong, hai nhom luon nam chung mot hang. */
+@media (min-width: 601px) {
+	header.wp-block-group > .wp-block-group.is-content-justification-space-between {
+		flex-wrap: nowrap;
+	}
+
+	/* Menu va tung muc menu khong tu xuong dong. */
+	header.wp-block-group .wp-block-navigation__container {
+		flex-wrap: nowrap;
+	}
+
+	header.wp-block-group .wp-block-navigation-item__label {
+		white-space: nowrap;
+	}
+
+	/* Nhom menu + nut giu be rong tu nhien va bam sat le phai. */
+	header.wp-block-group > .wp-block-group.is-content-justification-space-between > .is-content-justification-right {
+		flex: none;
+		margin-inline-start: auto;
+		justify-content: flex-end;
+	}
+
+	/* Khoi tieu de co the co lai, khong day nhom ben phai ra ngoai. */
+	header.wp-block-group > .wp-block-group.is-content-justification-space-between > .is-content-justification-left {
+		flex: 0 1 auto;
+		min-width: 0;
+	}
+}
+
+/*
+ * Man hinh hep: tieu de o dong tren, nut mo menu va cum nut doi nen o dong
+ * duoi. Nhom ben phai chiem tron chieu ngang va can deu hai dau de cum nut
+ * nam sat le phai ma khong bi day ra ngoai man hinh.
+ */
+@media (max-width: 600px) {
+	header.wp-block-group > .wp-block-group.is-content-justification-space-between > .is-content-justification-right {
+		flex: 1 1 100%;
+		min-width: 0;
+		margin-inline-start: 0;
+		justify-content: space-between;
+	}
+
+	.htt-theme-switch {
+		flex: none;
+		margin-inline-start: 0;
+	}
+}
+
+/* ==========================================================================
+   Menu: hien logo kenh thay cho chu Abooks / Bbooks
+   ========================================================================== */
+
+/*
+ * Giu nguyen chu trong HTML de trinh doc man hinh va SEO van hieu, chi an
+ * chu khoi tam nhin roi ve logo bang background-image. Nho vay menu trong
+ * Site Editor khong can sua, va neu anh loi thi chu van hien ra binh thuong.
+ */
+.wp-block-navigation-item__content[href*="/category/abooks/"] .wp-block-navigation-item__label,
+.wp-block-navigation-item__content[href*="/category/bbooks/"] .wp-block-navigation-item__label {
+	/* An chu nhung van doc duoc bang trinh doc man hinh. */
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+.wp-block-navigation-item__content[href*="/category/abooks/"],
+.wp-block-navigation-item__content[href*="/category/bbooks/"] {
+	display: inline-block;
+	width: 1.75rem;
+	height: 1.75rem;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	vertical-align: middle;
+}
+
+.wp-block-navigation-item__content[href*="/category/abooks/"] {
+	background-image: url("assets/img/logo-abooks.png");
+}
+
+.wp-block-navigation-item__content[href*="/category/bbooks/"] {
+	background-image: url("assets/img/logo-bbooks.png");
+}
+
+/* ==========================================================================
+   Footer: cum logo hai kenh thay cho menu chu
+   ========================================================================== */
+
+.htt-footer-channels {
+	display: flex;
+	align-items: center;
+	gap: 1.1rem;
+}
+
+/*
+ * Dung chung co che voi logo tren header: chu nam trong screen-reader-text
+ * de trinh doc man hinh van hieu, con logo ve bang background-image.
+ */
+.htt-footer-channel {
+	display: inline-block;
+	width: 2.5rem;
+	height: 2.5rem;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+.htt-footer-channel--abooks {
+	background-image: url("assets/img/logo-abooks.png");
+}
+
+.htt-footer-channel--bbooks {
+	background-image: url("assets/img/logo-bbooks.png");
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.htt-footer-channel { transition: opacity .15s ease; }
+}
+
+.htt-footer-channel:hover,
+.htt-footer-channel:focus-visible {
+	opacity: .78;
+}

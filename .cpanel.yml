@@ -1,0 +1,22 @@
+---
+# Deploy tu dong cho cPanel Git Version Control
+#
+# Khi bam "Pull or Deploy" trong cPanel, cPanel keo code moi nhat ve roi
+# chay cac lenh duoi day.
+#
+# Chi chep THEME CON sang public_html. Khong dong toi:
+#   - wp-config.php         (cau hinh database rieng cua hosting)
+#   - wp-content/uploads/   (anh nguoi dung tai len)
+#   - wp-admin, wp-includes (core WordPress)
+#
+# Dung `cp -R` thay vi rsync vi shared hosting khong phai luc nao cung co
+# rsync. Cach nay chi GHI DE va THEM file, khong xoa file cu - an toan hon,
+# doi lai neu xoa file o local thi phai xoa thu cong tren hosting.
+
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/hanhpzob/public_html/wp-content/themes/hanhtrinhtrithuc
+    - /bin/mkdir -p $DEPLOYPATH
+    - /bin/cp -R wp-content/themes/hanhtrinhtrithuc/. $DEPLOYPATH/
+    - /usr/bin/find $DEPLOYPATH -type d -exec chmod 755 {} \;
+    - /usr/bin/find $DEPLOYPATH -type f -exec chmod 644 {} \;
