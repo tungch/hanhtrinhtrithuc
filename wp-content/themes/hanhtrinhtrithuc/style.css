@@ -1019,3 +1019,104 @@ body {
 .htt-footer-channel:focus-visible {
 	opacity: .78;
 }
+
+/* ==========================================================================
+   Section bai viet noi bat
+   ========================================================================== */
+
+.htt-featured {
+	margin-block: 3rem 0;
+}
+
+.htt-featured__title {
+	margin: 0 0 1.25rem;
+	font-size: var(--wp--preset--font-size--large);
+	line-height: 1.25;
+}
+
+.htt-featured__list {
+	display: grid;
+	/* Tu xuong 1 cot khi khong du cho, khong can media query. */
+	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+	gap: 2rem 1.5rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.htt-featured__item {
+	margin: 0;
+}
+
+.htt-featured__link {
+	display: flex;
+	flex-direction: column;
+	/* Cung khoang cach voi the bai o luoi phia tren (.wp-block-post). */
+	gap: .4rem;
+	color: inherit;
+	text-decoration: none;
+}
+
+/* wpautop co the chen <p> vao output shortcode; triet tieu margin cua
+   chung de khoang cach khong bi xo lech so voi luoi phia tren. */
+.htt-featured__link > p,
+.htt-featured__item > p {
+	margin: 0;
+}
+
+.htt-featured__media {
+	margin: 0;
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.htt-featured__image {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 16 / 9;
+	object-fit: cover;
+}
+
+.htt-featured__channel {
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: 700;
+	letter-spacing: .04em;
+	text-transform: uppercase;
+}
+
+.htt-featured__channel--abooks { color: var(--htt-a-text); }
+.htt-featured__channel--bbooks { color: var(--htt-b-text); }
+
+.htt-featured__heading {
+	margin: 0;
+	/* Cung co chu voi tieu de bai o luoi phia tren (post-title "large"). */
+	font-size: var(--wp--preset--font-size--large);
+	line-height: 1.3;
+}
+
+.htt-featured__date {
+	margin: 0;
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--htt-muted);
+}
+
+/* Luoi phia tren co khoang 8px tren nhan chuyen muc (do block cua
+   WordPress sinh ra). Lap lai de hai section nhin giong het nhau. */
+.htt-featured__channel {
+	margin: .5rem 0 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.htt-featured__image,
+	.htt-featured__heading { transition: opacity .15s ease, color .15s ease; }
+}
+
+.htt-featured__link:hover .htt-featured__heading,
+.htt-featured__link:focus-visible .htt-featured__heading {
+	text-decoration: underline;
+}
+
+.htt-featured__link:hover .htt-featured__image {
+	opacity: .9;
+}

@@ -364,8 +364,127 @@ function htt_register_post_meta() {
 			},
 		)
 	);
+
+	register_post_meta(
+		'post',
+		'htt_featured',
+		array(
+			'type'              => 'string',
+			'single'            => true,
+			'default'           => '',
+			'show_in_rest'      => true,
+			'sanitize_callback' => 'sanitize_text_field',
+			'auth_callback'     => function () {
+				return current_user_can( 'edit_posts' );
+			},
+		)
+	);
+
+	register_post_meta(
+		'post',
+		'htt_featured_order',
+		array(
+			'type'              => 'integer',
+			'single'            => true,
+			'default'           => 0,
+			'show_in_rest'      => true,
+			'sanitize_callback' => 'absint',
+			'auth_callback'     => function () {
+				return current_user_can( 'edit_posts' );
+			},
+		)
+	);
 }
 add_action( 'init', 'htt_register_post_meta' );
+
+/**
+ * Add the "featured post" box to the post editor.
+ *
+ * Two fields in one box: a checkbox to put the post in the featured
+ * section, and a number to order it there. Both live on the post itself
+ * so picking a post is one tick while writing it - no separate screen to
+ * remember.
+ */
+function htt_featured_meta_box() {
+	add_meta_box(
+		'htt-featured',
+		'Bài viết nổi bật',
+		'htt_featured_meta_box_html',
+		'post',
+		'side',
+		'high'
+	);
+}
+add_action( 'add_meta_boxes', 'htt_featured_meta_box' );
+
+/**
+ * Render the featured-post box.
+ *
+ * @param WP_Post $post Post being edited.
+ */
+function htt_featured_meta_box_html( $post ) {
+	$is_featured = (bool) get_post_meta( $post->ID, 'htt_featured', true );
+	$order       = get_post_meta( $post->ID, 'htt_featured_order', true );
+	$order       = '' === $order ? '' : (int) $order;
+
+	wp_nonce_field( 'htt_featured_save', 'htt_featured_nonce' );
+	?>
+	<p>
+		<label>
+			<input type="checkbox" name="htt_featured" value="1"
+				<?php checked( $is_featured ); ?> />
+			Đưa bài này vào mục nổi bật
+		</label>
+	</p>
+	<p>
+		<label for="htt_featured_order">Thứ tự hiển thị</label>
+		<input type="number" name="htt_featured_order" id="htt_featured_order"
+			value="<?php echo esc_attr( (string) $order ); ?>"
+			min="0" step="1" style="width:5em" />
+	</p>
+	<p class="description">
+		Số nhỏ hiện trước. Để trống thì bài xếp sau cùng, theo ngày đăng
+		mới nhất.
+	</p>
+	<?php
+}
+
+/**
+ * Save the featured flag and its order.
+ *
+ * @param int $post_id Post being saved.
+ */
+function htt_save_featured( $post_id ) {
+	if ( ! isset( $_POST['htt_featured_nonce'] )
+		|| ! wp_verify_nonce( sanitize_key( $_POST['htt_featured_nonce'] ), 'htt_featured_save' ) ) {
+		return;
+	}
+
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+
+	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		return;
+	}
+
+	if ( isset( $_POST['htt_featured'] ) ) {
+		update_post_meta( $post_id, 'htt_featured', '1' );
+	} else {
+		delete_post_meta( $post_id, 'htt_featured' );
+	}
+
+	$order = isset( $_POST['htt_featured_order'] )
+		? trim( (string) wp_unslash( $_POST['htt_featured_order'] ) )
+		: '';
+
+	if ( '' === $order ) {
+		delete_post_meta( $post_id, 'htt_featured_order' );
+	} else {
+		update_post_meta( $post_id, 'htt_featured_order', max( 0, (int) $order ) );
+	}
+}
+add_action( 'save_post_post', 'htt_save_featured' );
 
 /**
  * Add the video URL box to the post editor.
@@ -1126,6 +1245,142 @@ function htt_quotes_slider( $atts = array() ) {
 	return (string) ob_get_clean();
 }
 add_shortcode( 'htt_quotes', 'htt_quotes_slider' );
+
+/**
+ * Section of hand-picked featured posts.
+ *
+ * Which posts appear, and in what order, is set per post in the editor
+ * (box "Bài viết nổi bật"). Posts without an order fall to the end,
+ * newest first, so ticking the box is enough to get a sensible result.
+ *
+ * Usage: [htt_featured] or [htt_featured title="Đọc nhiều" limit="4"]
+ *
+ * @param array $atts Shortcode attributes.
+ * @return string
+ */
+function htt_featured_posts( $atts = array() ) {
+	$atts = shortcode_atts(
+		array(
+			'title' => 'Bài viết nổi bật',
+			'limit' => 4,
+		),
+		$atts,
+		'htt_featured'
+	);
+
+	$posts = get_posts(
+		array(
+			'post_type'      => 'post',
+			'post_status'    => 'publish',
+			'posts_per_page' => max( 1, (int) $atts['limit'] ),
+			'meta_key'       => 'htt_featured_order',
+			'orderby'        => array(
+				'meta_value_num' => 'ASC',
+				'date'           => 'DESC',
+			),
+			'meta_query'     => array(
+				'relation' => 'AND',
+				array(
+					'key'     => 'htt_featured',
+					'value'   => '1',
+					'compare' => '=',
+				),
+			),
+		)
+	);
+
+	// Nothing picked yet - print nothing rather than an empty heading.
+	if ( ! $posts ) {
+		return '';
+	}
+
+	// Build the markup as one unbroken string. WordPress runs wpautop on
+	// shortcode output, and every blank line or line break in the HTML
+	// would come back as a stray <p> or <br> - which is what pushes the
+	// cards apart and breaks the anchor.
+	$items = '';
+
+	foreach ( $posts as $post ) {
+		$thumb = get_the_post_thumbnail(
+			$post->ID,
+			'htt-card',
+			array(
+				'class'   => 'htt-featured__image',
+				'loading' => 'lazy',
+			)
+		);
+
+		$media = $thumb
+			? '<div class="htt-featured__media">' . $thumb . '</div>'
+			: '';
+
+		$channel = htt_post_channel( $post->ID );
+		$label   = $channel
+			? sprintf(
+				'<span class="htt-featured__channel htt-featured__channel--%1$s">%2$s</span>',
+				esc_attr( $channel['slug'] ),
+				esc_html( $channel['name'] )
+			)
+			: '';
+
+		$items .= sprintf(
+			'<li class="htt-featured__item"><a class="htt-featured__link" href="%1$s">%2$s%3$s'
+			. '<h3 class="htt-featured__heading">%4$s</h3>'
+			. '<time class="htt-featured__date" datetime="%5$s">%6$s</time></a></li>',
+			esc_url( get_permalink( $post->ID ) ),
+			$media,
+			$label,
+			esc_html( get_the_title( $post->ID ) ),
+			esc_attr( get_the_date( 'c', $post->ID ) ),
+			esc_html( get_the_date( '', $post->ID ) )
+		);
+	}
+
+	$heading = '' !== trim( (string) $atts['title'] )
+		? sprintf(
+			'<h2 class="htt-featured__title" id="htt-featured-title">%s</h2>',
+			esc_html( $atts['title'] )
+		)
+		: '';
+
+	return sprintf(
+		'<section class="htt-featured" aria-labelledby="htt-featured-title">%s<ul class="htt-featured__list">%s</ul></section>',
+		$heading,
+		$items
+	);
+}
+add_shortcode( 'htt_featured', 'htt_featured_posts' );
+
+/**
+ * Keep wpautop away from the featured section.
+ *
+ * The shortcode returns a finished block of HTML. Left alone, wpautop
+ * wraps parts of it in <p> and adds <br> - stray tags that put uneven
+ * margins between the image, channel label and title, so the cards no
+ * longer line up with the post grid above.
+ *
+ * @param string $content Rendered block content.
+ * @param array  $block   Block being rendered.
+ * @return string
+ */
+function htt_unautop_featured( $content, $block ) {
+	if ( 'core/shortcode' !== ( $block['blockName'] ?? '' ) ) {
+		return $content;
+	}
+
+	if ( false === strpos( $content, 'htt-featured' ) ) {
+		return $content;
+	}
+
+	// Drop the <p>/<br> wrappers wpautop added around our own markup.
+	$content = preg_replace( '#<p>\s*(<(?:section|ul|li|div|h[23]|span|time|a)\b)#i', '$1', $content );
+	$content = preg_replace( '#(</(?:section|ul|li|div|h[23]|span|time|a)>)\s*</p>#i', '$1', $content );
+	$content = preg_replace( '#<p>\s*</p>#i', '', $content );
+	$content = str_replace( '<br />', '', $content );
+
+	return $content;
+}
+add_filter( 'render_block', 'htt_unautop_featured', 10, 2 );
 
 /**
  * Output Schema.org structured data for single posts.
