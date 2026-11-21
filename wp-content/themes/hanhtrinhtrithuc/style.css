@@ -872,10 +872,30 @@ body {
 	margin-block-start: 1.3em;
 }
 
-/* Vung doc hep lai tren man hinh lon de dong khong qua dai */
-.wp-block-post-content {
-	max-width: 40rem;
+/* Be rong than bai do contentSize trong theme.json quyet dinh (64rem).
+   Truoc day cho nay khoa rieng o 40rem cho de doc, nhung ca website da
+   thong nhat ve mot be rong nen bo di. */
+
+/* ==========================================================================
+   Be rong trang WooCommerce
+
+   WooCommerce (woocommerce-blocktheme.css) dat cung max-width: 1000px cho
+   tieu de va noi dung ba trang Tai khoan / Gio hang / Thanh toan. Con so
+   do khong doc tu theme.json, nen doi wideSize trong do khong an thua -
+   phai ghi de dung sau selector ay.
+
+   Keo ve 64rem = 1024px cho khop voi phan con lai cua trang.
+   ========================================================================== */
+
+.woocommerce-account .wp-block-post-title,
+.woocommerce-account main .woocommerce,
+.woocommerce-cart .wp-block-post-title,
+.woocommerce-cart main .woocommerce,
+.woocommerce-checkout .wp-block-post-title,
+.woocommerce-checkout main .woocommerce {
+	max-width: var(--wp--style--global--wide-size, 64rem);
 }
+
 
 /* ==========================================================================
    Header: giu cum nut doi che do nen luon nam ben phai
@@ -961,15 +981,32 @@ body {
 	border: 0;
 }
 
+/*
+ * Khoang cach giua cac muc menu deu la 16px, nhung mat nguoi khong do tu
+ * mep o ma do tu mep HINH. Icon tai khoan va gio hang la SVG 21px nam
+ * trong o 35px, san 7px le moi ben, nen khoang nhin thay la 30px. Hai logo
+ * kenh thi phu kin o nen chi con dung 16px - sat nhau han so voi phan con
+ * lai.
+ *
+ * Cho logo kenh cung muc le trong (7px moi ben) de moi khoang trong trong
+ * menu deu bang nhau. Hinh ve van 28px nhu cu, chi o chua no rong ra.
+ */
 .wp-block-navigation-item__content[href*="/category/abooks/"],
 .wp-block-navigation-item__content[href*="/category/bbooks/"] {
 	display: inline-block;
-	width: 1.75rem;
-	height: 1.75rem;
+	width: 2.625rem;
+	height: 2.625rem;
 	background-repeat: no-repeat;
 	background-position: center;
-	background-size: contain;
+	background-size: 1.75rem 1.75rem;
 	vertical-align: middle;
+}
+
+/* Muc chu ("Trang chu") khong co le trong nhu icon, nen tu no se sat voi
+   logo ben canh. Them dung phan le con thieu. */
+header .wp-block-navigation__container
+	> .wp-block-navigation-item:not(:has([href*="/category/"])) {
+	margin-inline-end: .4375rem;
 }
 
 .wp-block-navigation-item__content[href*="/category/abooks/"] {
@@ -1119,4 +1156,495 @@ body {
 
 .htt-featured__link:hover .htt-featured__image {
 	opacity: .9;
+}
+
+/* ==========================================================================
+   Nut "In theo yeu cau" (sticky o goc phai)
+   ========================================================================== */
+
+.htt-print {
+	position: fixed;
+	right: 1.25rem;
+	bottom: 1.25rem;
+	z-index: 50;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: .75rem;
+}
+
+.htt-print__toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: .5rem;
+	padding: .75rem 1.15rem;
+	border: 0;
+	border-radius: 999px;
+	background-color: var(--htt-ink);
+	color: var(--htt-bg);
+	font-family: var(--wp--preset--font-family--manrope);
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: 700;
+	cursor: pointer;
+	box-shadow: 0 6px 20px rgb(0 0 0 / .28);
+}
+
+.htt-print__toggle svg {
+	flex: none;
+}
+
+.htt-print__toggle:focus-visible {
+	outline: 2px solid var(--htt-b-text);
+	outline-offset: 2px;
+}
+
+/* --- Lop phu toan man hinh --- */
+
+.htt-print__overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 100;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1.25rem;
+	background-color: rgb(0 0 0 / .72);
+	overflow-y: auto;
+}
+
+.htt-print__overlay[hidden] {
+	display: none;
+}
+
+/* --- Panel san pham --- */
+
+.htt-print__panel {
+	position: relative;
+	/* Rong hon mot chut khi co sach 3D: cuon sach can cho de xoay nghieng
+	   va do bong, chat qua thi no cham mep panel. */
+	width: min(30rem, 100%);
+	max-height: calc(100vh - 2.5rem);
+	padding: 1.25rem;
+	border: 1px solid var(--htt-rule);
+	border-radius: 12px;
+	background-color: var(--htt-surface);
+	box-shadow: 0 12px 40px rgb(0 0 0 / .45);
+	overflow-y: auto;
+}
+
+.htt-print__close {
+	position: absolute;
+	top: .35rem;
+	right: .5rem;
+	width: 1.75rem;
+	height: 1.75rem;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: var(--htt-muted);
+	font-size: 1.35rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.htt-print__close:hover,
+.htt-print__close:focus-visible {
+	color: var(--htt-ink);
+}
+
+.htt-print__media {
+	position: relative;
+	margin-block-end: .5rem;
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+/* --- Sach 3D de len anh tinh --- */
+
+/* Anh tinh van nam day: no quy dinh chieu cao cua khung, hien ngay trong
+   khi sach dang tai, va la thu duy nhat con lai khi may khong co WebGL.
+   Vi the khi sach len thi lam mo no di chu khong go khoi luong. */
+/* Sach ben trong iframe de nen trong suot, nen mau nen do day quyet dinh.
+   Nho vay no di theo che do sang / toi cua trang, thay vi mot mang xanh
+   co dinh khong an nhap voi panel. */
+/* Mau nen: lay tu Cai dat > Tong quan neu co khai (bien --htt-book3d-bg
+   duoc in thang vao the div), khong thi theo nen cua giao dien - nghia
+   la tu doi theo che do sang / toi. */
+.htt-print__book3d {
+	position: absolute;
+	inset: 0;
+	background-color: var(--htt-book3d-bg, var(--htt-bg-sunk));
+}
+
+.htt-print__book3d[hidden] {
+	display: none;
+}
+
+.htt-print__book3d iframe {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+
+.htt-print__media.is-3d .htt-print__cover {
+	opacity: 0;
+}
+
+/* Sach can cho de xoay va do bong; khung dung ty le bia sach se chat
+   qua, nen o che do 3D khung noi rong ra gan vuong. */
+.htt-print__media.is-3d {
+	aspect-ratio: 1 / 1;
+	max-height: 55vh;
+}
+
+/* --- Khi sach mo ra doc thu --- */
+
+/* Khung hep hon cao, dung dang mot trang sach dung. Ty le nay cung la
+   dieu kien de sach hien tung trang mot: book3d chuyen sang che do mot
+   trang khi khung hep hon cao (xem get portrait trong book3d.js), va
+   mot trang thi chu to gan gap doi so voi hai trang doi nhau.
+
+   Chieu cao dat thang, be rong de aspect-ratio suy ra: khung chi chua
+   mot iframe dat tuyet doi nen khong co be rong tu nhien nao de co theo,
+   width:fit-content se lam no sup xuong 0. */
+.htt-print__media.is-reading {
+	/* Khung rong het panel, cao suy ra tu ty le. Lam nguoc lai - dat cao
+	   roi de be rong suy ra - thi khung tu thu nho va de lai hai mang
+	   trong hai ben cuon sach. */
+	width: 100%;
+	height: auto;
+	aspect-ratio: 2 / 3;
+}
+
+/* Chon "hai trang doi nhau" trong Cai dat thi khung phai nam ngang tro
+   lai: hai trang nhet trong mot khung doc se be bang nua, chu khong con
+   doc noi. Ty le 3/2 cung la dieu kien de book3d giu che do hai trang
+   khi nguoi dung de "tu chon theo man hinh". */
+.htt-print__media.is-reading.is-spread {
+	aspect-ratio: 3 / 2;
+}
+
+/* Mot cot o moi kich thuoc man hinh - cuon sach va nut dat hang xep doc
+   nhu nhau, tu dien thoai len den desktop. Panel giu nguyen be rong luc
+   dong, khong gian ra: fit-content se bam theo ten sach (mot dong dai)
+   chu khong theo khung sach, de lai hai mang trong hai ben cuon sach. */
+/* Khung cao gap ruoi be rong, nen chinh be rong panel la cach chan chieu
+   cao cua ca cai popup. 36vh x 1,5 = 54vh cho cuon sach, con lai danh cho
+   ten sach, gia, o so luong va nut dat hang - tat ca nam gon trong man
+   hinh, khong ai phai cuon moi thay nut mua. */
+.htt-print__panel.is-reading {
+	width: min(30rem, 36vh, 100%);
+}
+
+/* Hai trang doi nhau: khung nam ngang nen panel rong ra, va chieu cao
+   khung chi bang 2/3 be rong thay vi gap ruoi - chan theo 80vh. */
+.htt-print__panel.is-reading.is-spread {
+	width: min(52rem, 80vh, 100%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.htt-print__panel { transition: width .35s ease; }
+	.htt-print__media { transition: aspect-ratio .35s ease; }
+}
+
+.htt-print__media.is-3d .htt-print__cover {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.htt-print__cover { transition: opacity .3s ease; }
+}
+
+/* Anh san pham giu dung ty le goc - nguoi mua can thay toan bo ban in,
+   khong phai mot khung 16:9 da cat mat tren duoi. Gioi han chieu cao de
+   anh doc khong keo popup dai qua man hinh. */
+.htt-print__cover {
+	display: block;
+	/* Rong het khung, cao tu tinh theo ty le that cua anh. */
+	width: 100%;
+	height: auto;
+	max-height: 55vh;
+	/* Anh doc hep hon khung thi nam giua, khong lech trai. */
+	margin-inline: auto;
+	object-fit: contain;
+}
+
+/* Day anh nho duoi anh lon, chi hien khi co tu 2 anh tro len. */
+.htt-print__thumbs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .4rem;
+	margin-block-end: .75rem;
+}
+
+.htt-print__thumb {
+	width: 3.25rem;
+	height: 3.25rem;
+	padding: 0;
+	border: 2px solid transparent;
+	border-radius: 6px;
+	background: none;
+	cursor: pointer;
+	overflow: hidden;
+	opacity: .65;
+}
+
+.htt-print__thumb img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.htt-print__thumb.is-active,
+.htt-print__thumb:hover,
+.htt-print__thumb:focus-visible {
+	opacity: 1;
+}
+
+.htt-print__thumb.is-active {
+	border-color: var(--htt-b-text);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.htt-print__thumb { transition: opacity .15s ease, border-color .15s ease; }
+}
+
+.htt-print__body {
+	display: flex;
+	flex-direction: column;
+	gap: .4rem;
+}
+
+.htt-print__channel {
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: 700;
+	letter-spacing: .04em;
+	text-transform: uppercase;
+}
+
+.htt-print__channel--abooks { color: var(--htt-a-text); }
+.htt-print__channel--bbooks { color: var(--htt-b-text); }
+
+.htt-print__name {
+	margin: 0;
+	font-weight: 700;
+	line-height: 1.3;
+}
+
+.htt-print__price {
+	margin: 0;
+	font-size: var(--wp--preset--font-size--medium);
+	font-weight: 700;
+}
+
+.htt-print__note {
+	margin: 0;
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--htt-muted);
+}
+
+.htt-print__form {
+	display: flex;
+	flex-direction: column;
+	gap: .6rem;
+	margin: 0;
+}
+
+.htt-print__qty {
+	display: flex;
+	align-items: center;
+	gap: .6rem;
+}
+
+.htt-print__qty label {
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--htt-muted);
+}
+
+/* Lay dung thong so cua o so luong trong gio hang (block cart) de hai
+   noi nhin nhu mot: khung mo bo 4px, nut tru/cong hai ben, so o giua. */
+.htt-print__qty-selector {
+	display: flex;
+	align-items: center;
+	position: relative;
+	border: none;
+	border-radius: 4px;
+	background: color-mix(in srgb, currentColor 5%, transparent);
+	overflow: hidden;
+}
+
+.htt-print__qty-btn {
+	min-width: 30px;
+	margin: 0;
+	padding: .5em 0;
+	border: 0;
+	background: none transparent;
+	box-shadow: none;
+	color: currentColor;
+	font-size: .9em;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 1;
+	text-align: center;
+	text-decoration: none;
+	opacity: .6;
+	cursor: pointer;
+}
+
+.htt-print__qty-btn:hover,
+.htt-print__qty-btn:focus-visible {
+	opacity: 1;
+}
+
+.htt-print__qty-btn:disabled {
+	opacity: .3;
+	cursor: default;
+}
+
+.htt-print__qty-input {
+	flex: 1 1 auto;
+	min-width: 40px;
+	margin: 0;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+	color: currentColor;
+	font-family: inherit;
+	font-size: var(--wp--preset--font-size--small);
+	line-height: 1;
+	text-align: center;
+	vertical-align: middle;
+	appearance: textfield;
+}
+
+/* An nut tang/giam mac dinh cua trinh duyet - da co nut rieng. */
+.htt-print__qty-input::-webkit-outer-spin-button,
+.htt-print__qty-input::-webkit-inner-spin-button {
+	appearance: none;
+	margin: 0;
+}
+
+.htt-print__qty-input:focus-visible {
+	outline: 2px solid var(--htt-b-text);
+	outline-offset: -2px;
+}
+
+.htt-print__order {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-block-start: .35rem;
+	padding: .7em 1.2em;
+	border-radius: 8px;
+	background-color: var(--htt-ink);
+	color: var(--htt-bg);
+	font-weight: 700;
+	font-size: var(--wp--preset--font-size--small);
+	text-decoration: none;
+}
+
+button.htt-print__order {
+	width: 100%;
+	border: 0;
+	font-family: inherit;
+	cursor: pointer;
+}
+
+.htt-print__order:hover,
+.htt-print__order:focus-visible {
+	opacity: .9;
+	color: var(--htt-bg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.htt-print__toggle,
+	.htt-print__order { transition: opacity .15s ease, transform .15s ease; }
+	.htt-print__toggle:hover { transform: translateY(-1px); }
+}
+
+/* Man hinh hep: nut va panel bam sat hai le cho de bam. */
+@media (max-width: 600px) {
+	.htt-print {
+		right: .75rem;
+		bottom: .75rem;
+		left: .75rem;
+		align-items: stretch;
+	}
+
+	.htt-print__toggle {
+		justify-content: center;
+	}
+
+}
+
+/* Truong hop khong co JavaScript duoc xu ly bang mot khoi <noscript>
+   in kem trong htt_print_button(), khong phai o day: mot class .no-js
+   thi phai co ai do gan len <html>, ma khong cho nao trong giao dien
+   nay lam viec do. */
+
+/* ==========================================================================
+   Anh bia trong bang don hang
+   
+   Trang "Xac nhan don hang" va "Xem don hang" khong in anh san pham nao -
+   ca khoi moi lan template cu deu chi co ten va gia. Anh duoc chen kem
+   ten san pham (xem htt_print_order_name_image), nen o day chi lo xep
+   anh va chu nam canh nhau.
+   ========================================================================== */
+
+/* Anh nam trai, phan chu ben phai. So luong ("x 1") do WooCommerce in
+   ra NGOAI khoi nay, ngay sau ten - nen o san pham duoc keo thanh luoi
+   hai cot, anh chiem ca cot trai con moi thu khac don sang cot phai. */
+.woocommerce-table__product-name,
+.wc-block-order-confirmation-totals__product {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: .25rem .75rem;
+	align-items: start;
+}
+
+.htt-order-item {
+	display: contents;
+}
+
+/* Bia sach cao hon rong. Chan theo chieu cao roi de be rong tu tinh:
+   lam nguoc lai thi moi cuon mot ty le se cao thap khac nhau, bang don
+   hang trong lo cho.
+
+   Lap lai class hai lan de thang duoc ".woocommerce img { height: auto }"
+   cua WooCommerce - quy tac do hai class nen dac hieu hon mot class don. */
+.htt-order-item__thumb.htt-order-item__thumb {
+	/* Anh nam cot trai, keo dai het chieu cao hang. */
+	grid-column: 1;
+	grid-row: 1 / -1;
+	align-self: start;
+	width: auto;
+	height: 4.5rem;
+	max-width: none;
+	border-radius: 4px;
+	/* Anh goc giu nguyen ty le - khong cat. */
+	object-fit: contain;
+}
+
+/* Ten san pham o cot phai, hang dau. Moi thu WooCommerce in ra sau no -
+   so luong, meta dong hang - tu doi xuong cac hang tiep theo cua cot
+   phai, vi cot trai da bi anh chiem het. */
+.htt-order-item__name {
+	grid-column: 2;
+	min-width: 0;
+}
+
+.woocommerce-table__product-name > :not(.htt-order-item__thumb),
+.wc-block-order-confirmation-totals__product > :not(.htt-order-item__thumb) {
+	grid-column: 2;
+}
+
+@media (max-width: 30rem) {
+	.htt-order-item__thumb.htt-order-item__thumb { height: 3.5rem; }
 }

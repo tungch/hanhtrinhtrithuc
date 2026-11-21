@@ -1,0 +1,267 @@
+:root {
+  --ui-bg: rgba(255, 255, 255, 0.9);
+  --ui-fg: #22324d;
+  --ui-muted: #6b7a93;
+  --accent: #2f4f84;
+  --accent-fg: #fff;
+  --shadow: 0 8px 30px rgba(20, 40, 80, 0.22);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #8fb0db;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--ui-fg);
+  -webkit-tap-highlight-color: transparent;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background-color: var(--bg-color, #8fb0db);
+  background-image: var(--bg-image, radial-gradient(ellipse at 50% 40%, #a9c3e6, #6886b6));
+  background-size: cover;
+  background-position: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#book-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: pan-y;          /* vuốt dọc vẫn cuộn trang web chứa iframe */
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+#book-canvas.ready { opacity: 1; }
+#book-canvas.pointer { cursor: pointer; }
+#book-canvas.grab { cursor: grab; }
+#book-canvas.grabbing { cursor: grabbing; }
+
+/* ---------- Loader ---------- */
+#loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: #fff;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+#loader.done { opacity: 0; }
+.spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Gợi ý mở sách ---------- */
+#hint {
+  position: absolute;
+  left: 50%;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ui-bg);
+  color: var(--ui-fg);
+  font: inherit;
+  font-size: 14px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+#hint svg { width: 18px; height: 18px; fill: var(--accent); }
+@keyframes pulse {
+  0%, 100% { box-shadow: var(--shadow), 0 0 0 0 rgba(255, 255, 255, 0.55); }
+  50% { box-shadow: var(--shadow), 0 0 0 10px rgba(255, 255, 255, 0); }
+}
+
+/* ---------- Thanh công cụ ---------- */
+#toolbar {
+  position: absolute;
+  left: 50%;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px;
+  border-radius: 999px;
+  background: var(--ui-bg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+#toolbar button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ui-fg);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+#toolbar button:hover:not(:disabled) { background: rgba(47, 79, 132, 0.1); }
+#toolbar button:disabled { opacity: 0.3; cursor: default; }
+#toolbar button.active { background: rgba(47, 79, 132, 0.15); }
+#toolbar svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#page-label {
+  min-width: 92px;
+  padding: 0 6px;
+  text-align: center;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-fg);
+  white-space: nowrap;
+}
+#seek {
+  width: 130px;
+  margin: 0 6px 0 2px;
+  accent-color: #2f4f84;
+  cursor: pointer;
+}
+#toolbar .sep {
+  width: 1px;
+  height: 22px;
+  margin: 0 4px;
+  background: rgba(34, 50, 77, 0.15);
+}
+
+/* ---------- Kêu gọi mua sách ---------- */
+#cta {
+  position: absolute;
+  left: 50%;
+  bottom: calc(max(14px, env(safe-area-inset-bottom)) + 62px);
+  transform: translateX(-50%);
+  width: min(360px, calc(100% - 32px));
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: var(--ui-bg);
+  box-shadow: var(--shadow);
+  text-align: center;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+#cta strong { display: block; font-size: 15px; }
+#cta p { margin: 6px 0 12px; font-size: 13px; color: var(--ui-muted); line-height: 1.45; }
+#cta a {
+  display: inline-block;
+  padding: 9px 20px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+}
+#cta a:hover { filter: brightness(1.1); }
+
+.hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+#toolbar.hidden, #hint.hidden, #cta.hidden { transform: translate(-50%, 12px); }
+
+/* ---------- Sách nằm trong iframe của trang khác (?embed=1) ---------- */
+/* Trang chứa đã có nút đặt hàng thật ngay dưới sách, nên khối mời mua ở
+   đây là nút mua thứ hai - dễ gây nhầm, và nó mở link bằng target _top
+   nên sẽ điều hướng cả trang chứa. Nút toàn màn hình cũng bỏ: trong một
+   popup hẹp thì phóng to bằng kính lúp hợp hơn. */
+html[data-embed] #cta,
+html[data-embed] #btn-full {
+  display: none;
+}
+
+/* Trong iframe mà cấu hình KHÔNG khai màu nền: để trong suốt cho trang
+   chứa tự quyết định, thay vì áp một mảng xanh cố định lên giữa popup.
+   Có khai màu thì data-bg được bật và màu đó thắng - xem applyTheme(). */
+html[data-embed]:not([data-bg]),
+html[data-embed]:not([data-bg]) body,
+html[data-embed]:not([data-bg]) #stage {
+  background: transparent;
+}
+
+/* Có khai màu nền thì cả trang theo màu đó, không riêng #stage: lúc
+   chuyển hướng màn hình hay bàn phím đẩy khung lên, mép ngoài #stage
+   có thể lộ ra trong khoảnh khắc. */
+html[data-bg],
+html[data-bg] body {
+  background: var(--bg-color, #8fb0db);
+}
+
+/* ---------- Dự phòng 2D (không có WebGL) ---------- */
+#fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 16px;
+}
+#fallback.hidden { display: none; }
+#fallback img {
+  max-width: min(100%, 420px);
+  max-height: calc(100% - 80px);
+  border-radius: 3px;
+  box-shadow: var(--shadow);
+  background: #fff;
+}
+#fallback nav { display: flex; align-items: center; gap: 12px; }
+#fallback button {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ui-bg);
+  color: var(--ui-fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  #toolbar button { width: 36px; height: 36px; }
+  #page-label { min-width: 74px; font-size: 12px; }
+  #seek { width: 70px; margin: 0 2px; }
+}
+@media (max-width: 380px) {
+  #seek { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #hint { animation: none; }
+}

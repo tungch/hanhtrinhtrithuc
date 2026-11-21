@@ -9,6 +9,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// Sách 3D: biến nội dung bài viết thành cuốn sách lật trang trong popup
+// "In theo yêu cầu". Để riêng vì phần chuyển khối Gutenberg sang chuỗi
+// nội dung sách khá dài và không liên quan gì đến phần còn lại ở đây.
+require_once get_stylesheet_directory() . '/inc/book3d.php';
+
+if ( is_admin() ) {
+	require_once get_stylesheet_directory() . '/inc/book3d-admin.php';
+}
+
 /**
  * Load the child theme stylesheet after the parent's.
  *
@@ -73,6 +82,19 @@ function htt_enqueue_scripts() {
 				get_stylesheet_directory_uri() . $share_rel,
 				array(),
 				(string) filemtime( $share_path ),
+				true
+			);
+		}
+
+		$print_rel  = '/assets/js/print.js';
+		$print_path = get_stylesheet_directory() . $print_rel;
+
+		if ( file_exists( $print_path ) ) {
+			wp_enqueue_script(
+				'htt-print',
+				get_stylesheet_directory_uri() . $print_rel,
+				array(),
+				(string) filemtime( $print_path ),
 				true
 			);
 		}
@@ -382,6 +404,37 @@ function htt_register_post_meta() {
 
 	register_post_meta(
 		'post',
+		'htt_print_show',
+		array(
+			'type'              => 'string',
+			'single'            => true,
+			'default'           => '',
+			'show_in_rest'      => true,
+			'sanitize_callback' => 'sanitize_text_field',
+			'auth_callback'     => function () {
+				return current_user_can( 'edit_posts' );
+			},
+		)
+	);
+
+	register_post_meta(
+		'post',
+		'htt_print_image',
+		array(
+			// Comma-separated attachment ids, first one is the cover.
+			'type'              => 'string',
+			'single'            => true,
+			'default'           => '',
+			'show_in_rest'      => true,
+			'sanitize_callback' => 'sanitize_text_field',
+			'auth_callback'     => function () {
+				return current_user_can( 'edit_posts' );
+			},
+		)
+	);
+
+	register_post_meta(
+		'post',
 		'htt_featured_order',
 		array(
 			'type'              => 'integer',
@@ -485,6 +538,1076 @@ function htt_save_featured( $post_id ) {
 	}
 }
 add_action( 'save_post_post', 'htt_save_featured' );
+
+/**
+ * ==========================================================================
+ * In theo yêu cầu
+ *
+ * One WooCommerce product serves every article: the reader orders "a
+ * printed copy", and which book that means comes from the post they are
+ * reading. The product id is stored once in Settings; the cover image,
+ * title and author come from the post, so adding a book is just writing
+ * the article - no product to create each time.
+ * ==========================================================================
+ */
+
+/**
+ * Settings for the print-on-demand button.
+ */
+function htt_print_settings() {
+	add_settings_section(
+		'htt_print',
+		'In theo yêu cầu',
+		function () {
+			echo '<p>Nút "In theo yêu cầu" hiện ở cuối mỗi bài viết. '
+				. 'Ảnh và tên sách lấy theo từng bài, nên chỉ cần khai báo '
+				. 'một sản phẩm dùng chung.</p>';
+		},
+		'general'
+	);
+
+	$fields = array(
+		'htt_print_product_id' => array(
+			'label' => 'ID sản phẩm WooCommerce',
+			'type'  => 'number',
+			'desc'  => 'Mở sản phẩm trong trang quản trị, lấy số trong địa chỉ '
+				. '(post=<strong>123</strong>). Để trống nếu chưa có WooCommerce.',
+		),
+		'htt_print_price'      => array(
+			'label' => 'Giá hiển thị',
+			'type'  => 'text',
+			'desc'  => 'Chỉ dùng khi chưa cài WooCommerce. Ví dụ: 180.000đ',
+		),
+		'htt_print_note'       => array(
+			'label' => 'Mô tả ngắn',
+			'type'  => 'text',
+			'desc'  => 'Một câu về dịch vụ in. Ví dụ: Bìa mềm, in màu, giao 3-5 ngày.',
+		),
+		'htt_print_fallback'   => array(
+			'label' => 'Link đặt hàng dự phòng',
+			'type'  => 'url',
+			'desc'  => 'Dùng khi chưa có WooCommerce — link Shopee, Tiki hoặc Zalo.',
+		),
+	);
+
+	foreach ( $fields as $key => $field ) {
+		register_setting( 'general', $key, array( 'sanitize_callback' => 'sanitize_text_field' ) );
+
+		add_settings_field(
+			$key,
+			$field['label'],
+			function () use ( $key, $field ) {
+				printf(
+					'<input type="%1$s" name="%2$s" id="%2$s" value="%3$s" class="regular-text" />'
+					. '<p class="description">%4$s</p>',
+					esc_attr( $field['type'] ),
+					esc_attr( $key ),
+					esc_attr( (string) get_option( $key, '' ) ),
+					wp_kses( $field['desc'], array( 'strong' => array() ) )
+				);
+			},
+			'general',
+			'htt_print'
+		);
+	}
+}
+add_action( 'admin_init', 'htt_print_settings' );
+
+/**
+ * Let a single post opt out of the print button.
+ */
+function htt_print_meta_box() {
+	add_meta_box(
+		'htt-print',
+		'In theo yêu cầu',
+		'htt_print_meta_box_html',
+		'post',
+		'side'
+	);
+}
+add_action( 'add_meta_boxes', 'htt_print_meta_box' );
+
+/**
+ * Render the opt-out box.
+ *
+ * @param WP_Post $post Post being edited.
+ */
+function htt_print_meta_box_html( $post ) {
+	$show = (bool) get_post_meta( $post->ID, 'htt_print_show', true );
+	wp_nonce_field( 'htt_print_save', 'htt_print_nonce' );
+	?>
+	<p>
+		<label>
+			<input type="checkbox" name="htt_print_show" value="1" <?php checked( $show ); ?> />
+			Hiện nút In theo yêu cầu ở bài này
+		</label>
+	</p>
+	<p class="description">
+		Mặc định nút không hiện. Tích vào đây với những bài gắn với một
+		cuốn sách có thể đặt in.
+	</p>
+
+	<hr />
+
+	<?php
+	$image_ids = htt_print_image_ids( $post->ID );
+	?>
+	<p><strong>Ảnh sản phẩm</strong></p>
+
+	<div id="htt-print-image-list" class="htt-print-admin-list">
+		<?php foreach ( $image_ids as $id ) : ?>
+			<span class="htt-print-admin-item" data-id="<?php echo esc_attr( (string) $id ); ?>">
+				<?php echo wp_get_attachment_image( $id, 'thumbnail' ); ?>
+				<button type="button" class="htt-print-admin-remove" aria-label="Bỏ ảnh này">&times;</button>
+			</span>
+		<?php endforeach; ?>
+	</div>
+
+	<input type="hidden" name="htt_print_image" id="htt_print_image"
+		value="<?php echo esc_attr( implode( ',', $image_ids ) ); ?>" />
+
+	<p>
+		<button type="button" class="button" id="htt_print_image_btn">Thêm ảnh</button>
+		<button type="button" class="button-link delete" id="htt_print_image_clear"
+			<?php echo $image_ids ? '' : 'style="display:none"'; ?>>Xoá hết</button>
+	</p>
+
+	<p class="description">
+		Ảnh đầu tiên là ảnh đại diện — dùng trong giỏ hàng, thanh toán và
+		đơn hàng. Kéo thả để đổi thứ tự. Để trống thì lấy ảnh đại diện của
+		bài viết.
+	</p>
+
+	<style>
+		.htt-print-admin-list {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 6px;
+			margin-bottom: 8px;
+		}
+		.htt-print-admin-item {
+			position: relative;
+			display: block;
+			width: 72px;
+			cursor: move;
+		}
+		.htt-print-admin-item img {
+			display: block;
+			width: 72px;
+			height: 72px;
+			object-fit: cover;
+			border: 1px solid #dcdcde;
+			border-radius: 4px;
+		}
+		/* Vien dam hon de biet ngay anh nao se dung lam dai dien. */
+		.htt-print-admin-item:first-child img {
+			border-color: #2271b1;
+			box-shadow: 0 0 0 1px #2271b1;
+		}
+		.htt-print-admin-item.is-dragging {
+			opacity: .4;
+		}
+		.htt-print-admin-remove {
+			position: absolute;
+			top: -6px;
+			right: -6px;
+			width: 20px;
+			height: 20px;
+			padding: 0;
+			border: 0;
+			border-radius: 50%;
+			background: #d63638;
+			color: #fff;
+			font-size: 14px;
+			line-height: 1;
+			cursor: pointer;
+		}
+	</style>
+	<?php
+}
+
+/**
+ * Load the media picker on the post editor.
+ *
+ * @param string $hook Current admin page.
+ * @return void
+ */
+function htt_print_admin_assets( $hook ) {
+	if ( 'post.php' !== $hook && 'post-new.php' !== $hook ) {
+		return;
+	}
+
+	if ( 'post' !== get_current_screen()->post_type ) {
+		return;
+	}
+
+	wp_enqueue_media();
+	wp_add_inline_script( 'jquery-core', <<<'JS'
+jQuery(function ($) {
+	var frame;
+	var $id    = $('#htt_print_image');
+	var $list  = $('#htt-print-image-list');
+	var $clear = $('#htt_print_image_clear');
+
+	if (!$list.length) { return; }
+
+	// O an giu thu tu that; luoi anh chi la hinh chieu cua no.
+	function sync() {
+		var ids = $list.find('.htt-print-admin-item').map(function () {
+			return $(this).data('id');
+		}).get();
+
+		$id.val(ids.join(','));
+		$clear.toggle(ids.length > 0);
+	}
+
+	function addItem(img) {
+		if ($list.find('[data-id="' + img.id + '"]').length) { return; }
+
+		var src = (img.sizes && img.sizes.thumbnail) ? img.sizes.thumbnail.url : img.url;
+
+		$list.append(
+			$('<span class="htt-print-admin-item" draggable="true">')
+				.attr('data-id', img.id)
+				.append($('<img>').attr('src', src).attr('alt', ''))
+				.append('<button type="button" class="htt-print-admin-remove" aria-label="Bo anh nay">&times;</button>')
+		);
+	}
+
+	$('#htt_print_image_btn').on('click', function (e) {
+		e.preventDefault();
+
+		if (frame) { frame.open(); return; }
+
+		frame = wp.media({
+			title: 'Chọn ảnh cho sản phẩm in',
+			button: { text: 'Dùng ảnh này' },
+			library: { type: 'image' },
+			multiple: 'add'
+		});
+
+		frame.on('select', function () {
+			frame.state().get('selection').each(function (m) {
+				addItem(m.toJSON());
+			});
+			sync();
+		});
+
+		frame.open();
+	});
+
+	$list.on('click', '.htt-print-admin-remove', function (e) {
+		e.preventDefault();
+		$(this).closest('.htt-print-admin-item').remove();
+		sync();
+	});
+
+	$clear.on('click', function (e) {
+		e.preventDefault();
+		$list.empty();
+		sync();
+	});
+
+	// Keo tha doi thu tu - anh dau tien la anh dai dien.
+	var dragged = null;
+
+	$list.on('dragstart', '.htt-print-admin-item', function () {
+		dragged = this;
+		$(this).addClass('is-dragging');
+	});
+
+	$list.on('dragend', '.htt-print-admin-item', function () {
+		$(this).removeClass('is-dragging');
+		dragged = null;
+		sync();
+	});
+
+	$list.on('dragover', '.htt-print-admin-item', function (e) {
+		e.preventDefault();
+
+		if (!dragged || dragged === this) { return; }
+
+		var items = $list.find('.htt-print-admin-item').get();
+
+		if (items.indexOf(dragged) < items.indexOf(this)) {
+			$(this).after(dragged);
+		} else {
+			$(this).before(dragged);
+		}
+	});
+
+	$list.find('.htt-print-admin-item').attr('draggable', 'true');
+	sync();
+});
+JS
+	);
+}
+add_action( 'admin_enqueue_scripts', 'htt_print_admin_assets' );
+
+/**
+ * Save the opt-out flag.
+ *
+ * @param int $post_id Post being saved.
+ */
+function htt_save_print( $post_id ) {
+	if ( ! isset( $_POST['htt_print_nonce'] )
+		|| ! wp_verify_nonce( sanitize_key( $_POST['htt_print_nonce'] ), 'htt_print_save' ) ) {
+		return;
+	}
+
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+
+	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		return;
+	}
+
+	if ( isset( $_POST['htt_print_show'] ) ) {
+		update_post_meta( $post_id, 'htt_print_show', '1' );
+	} else {
+		delete_post_meta( $post_id, 'htt_print_show' );
+	}
+
+	$raw = isset( $_POST['htt_print_image'] )
+		? sanitize_text_field( wp_unslash( $_POST['htt_print_image'] ) )
+		: '';
+
+	$ids = array_filter( array_map( 'absint', explode( ',', $raw ) ) );
+
+	$ids = array_filter(
+		$ids,
+		function ( $id ) {
+			return 'attachment' === get_post_type( $id );
+		}
+	);
+
+	// Keep the editor's order, but never the same photo twice.
+	$ids = array_values( array_unique( $ids ) );
+
+	if ( $ids ) {
+		update_post_meta( $post_id, 'htt_print_image', implode( ',', $ids ) );
+	} else {
+		delete_post_meta( $post_id, 'htt_print_image' );
+	}
+}
+add_action( 'save_post_post', 'htt_save_print' );
+
+/**
+ * Is WooCommerce available to take the order?
+ *
+ * @return bool
+ */
+function htt_has_woo() {
+	return class_exists( 'WooCommerce' ) && function_exists( 'wc_get_product' );
+}
+
+/**
+ * Sticky "print on demand" button plus its product panel.
+ *
+ * The panel is rendered with the page rather than fetched on click, so
+ * the reader sees the cover and price the moment the button is pressed -
+ * and it still works with JavaScript switched off, where the panel is
+ * simply always open.
+ *
+ * @return string
+ */
+function htt_print_button() {
+	if ( ! is_singular( 'post' ) ) {
+		return '';
+	}
+
+	$post_id = get_the_ID();
+
+	// Opt-in: the button stays out of the way unless the editor ticked
+	// the box, since most articles are not tied to a printable book.
+	if ( ! get_post_meta( $post_id, 'htt_print_show', true ) ) {
+		return '';
+	}
+
+	$product_id = (int) get_option( 'htt_print_product_id', 0 );
+	$fallback   = (string) get_option( 'htt_print_fallback', '' );
+
+	// Nothing to sell yet - stay out of the reader's way.
+	if ( ! $product_id && '' === $fallback ) {
+		return '';
+	}
+
+	$note = (string) get_option( 'htt_print_note', '' );
+
+	// Price and order link come from WooCommerce when it is running, and
+	// from the settings above when it is not.
+	$price = (string) get_option( 'htt_print_price', '' );
+	$order = $fallback;
+	$label = 'Đặt in cuốn này';
+
+	$woo = false;
+
+	if ( $product_id && htt_has_woo() ) {
+		$product = wc_get_product( $product_id );
+
+		if ( $product && $product->is_purchasable() && $product->is_in_stock() ) {
+			$price = wp_strip_all_tags( $product->get_price_html() );
+			// Carry the post id so the order knows which book was meant.
+			$order = add_query_arg(
+				array(
+					'add-to-cart' => $product_id,
+					'htt_post'    => $post_id,
+				),
+				wc_get_cart_url()
+			);
+			$label = 'Thêm vào giỏ';
+			$woo   = true;
+		}
+	}
+
+	if ( '' === $order ) {
+		return '';
+	}
+
+	$title = get_the_title( $post_id );
+
+	// Uploaded product photos if there are any, else the article cover.
+	$gallery = htt_print_image_ids( $post_id );
+
+	if ( ! $gallery ) {
+		$fallback = (int) get_post_thumbnail_id( $post_id );
+		$gallery  = $fallback ? array( $fallback ) : array();
+	}
+
+	$cover = '';
+	$strip = '';
+
+	if ( $gallery ) {
+		// 'large' is resized, not cropped, so a portrait book cover keeps
+		// its shape - 'htt-card' would square it off to 16:9.
+		$cover = wp_get_attachment_image(
+			$gallery[0],
+			'large',
+			false,
+			array(
+				'class'   => 'htt-print__cover',
+				'loading' => 'lazy',
+				'alt'     => '',
+			)
+		);
+
+		// Cuốn sách 3D dựng từ bìa và nội dung bài này. Khung iframe in ra
+		// cùng trang nhưng chưa có src: cả bộ Three.js nặng hơn nửa megabyte,
+		// nên nó chỉ được tải khi người đọc thật sự mở popup (xem print.js).
+		$book3d = '';
+
+		if ( htt_book3d_enabled( $post_id ) ) {
+			// Màu nền khai trong Cài đặt dùng cho cả popup lẫn sách mở
+			// toàn trang. Để trống thì khung này mang màu của giao diện,
+			// nên nó tự đi theo chế độ sáng / tối.
+			$book3d_bg = htt_book3d_defaults()['bg'];
+
+			$book3d = sprintf(
+				'<div class="htt-print__book3d" data-spread="%4$s"%3$s hidden>'
+				. '<iframe data-src="%1$s" title="Xem thử sách 3D: %2$s"'
+				. ' loading="lazy" allow="fullscreen" referrerpolicy="same-origin"></iframe>'
+				. '</div>',
+				esc_url( htt_book3d_iframe_url( $post_id ) ),
+				esc_attr( $title ),
+				'' === $book3d_bg
+					? ''
+					: ' style="--htt-book3d-bg:' . esc_attr( $book3d_bg ) . '"',
+				esc_attr( htt_book3d_defaults()['spread'] )
+			);
+		}
+
+		// More than one photo earns a row of thumbnails under the main
+		// image; a single one would just be the same picture twice.
+		//
+		// Có sách 3D thì không có dãy nào cả: cuốn sách xoay được, lật
+		// được, cho xem cả bìa trước, bìa sau lẫn ruột - một dãy ảnh tĩnh
+		// bên dưới chỉ lặp lại thứ người mua đang cầm trên tay.
+		if ( '' === $book3d && count( $gallery ) > 1 ) {
+			$thumbs = '';
+
+			foreach ( $gallery as $i => $id ) {
+				$full = wp_get_attachment_image_url( $id, 'large' );
+
+				if ( ! $full ) {
+					continue;
+				}
+
+				$thumbs .= sprintf(
+					'<button type="button" class="htt-print__thumb%1$s" data-full="%2$s"'
+					. ' aria-label="Xem ảnh %3$d">%4$s</button>',
+					0 === $i ? ' is-active' : '',
+					esc_url( $full ),
+					$i + 1,
+					wp_get_attachment_image( $id, 'thumbnail', false, array( 'alt' => '' ) )
+				);
+			}
+
+			$strip = '<div class="htt-print__thumbs">' . $thumbs . '</div>';
+		}
+
+		// Ảnh tĩnh nằm dưới sách 3D, không bị bỏ đi: nó hiện ngay trong khi
+		// sách đang tải, và là thứ duy nhất còn lại khi máy không có WebGL
+		// hay người đọc tắt JavaScript.
+		$cover .= $book3d;
+	}
+
+	$channel = htt_post_channel( $post_id );
+
+	// With WooCommerce the quantity has to reach the cart, so the action
+	// is a real form post. Without it there is nothing to submit to, and
+	// a plain link to the shop/Zalo page is all we can offer.
+	if ( $woo ) {
+		$action = sprintf(
+			'<form class="htt-print__form" method="post" action="%1$s">'
+			. '<input type="hidden" name="add-to-cart" value="%2$d" />'
+			. '<input type="hidden" name="htt_post" value="%3$d" />'
+			// Same three-part control the block cart uses: minus, number,
+			// plus - so the reader meets one quantity field, not two.
+			. '<div class="htt-print__qty">'
+			. '<label for="htt-print-qty">Số lượng</label>'
+			. '<div class="htt-print__qty-selector">'
+			. '<button type="button" class="htt-print__qty-btn htt-print__qty-btn--minus"'
+			. ' aria-label="Giảm số lượng">&minus;</button>'
+			. '<input type="number" id="htt-print-qty" class="htt-print__qty-input"'
+			. ' name="quantity" value="1" min="1" max="9999" step="1" inputmode="numeric" />'
+			. '<button type="button" class="htt-print__qty-btn htt-print__qty-btn--plus"'
+			. ' aria-label="Tăng số lượng">&plus;</button>'
+			. '</div>'
+			. '</div>'
+			. '<button type="submit" class="htt-print__order">%4$s</button>'
+			. '</form>',
+			esc_url( wc_get_cart_url() ),
+			$product_id,
+			$post_id,
+			esc_html( $label )
+		);
+	} else {
+		$action = sprintf(
+			'<a class="htt-print__order" href="%1$s">%2$s</a>',
+			esc_url( $order ),
+			esc_html( $label )
+		);
+	}
+
+	return sprintf(
+		'<div class="htt-print" data-htt-print>'
+		. '<button type="button" class="htt-print__toggle" aria-expanded="false" aria-controls="htt-print-panel">'
+		. '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="20" height="20">'
+		. '<path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"'
+		. ' d="M6 9V3.8h12V9M6 17.5H4.2v-6h15.6v6H18M6 14.5h12v5.7H6z"/></svg>'
+		. '<span>In theo yêu cầu</span></button>'
+		// Khong co JavaScript thi khong ai go duoc thuoc tinh hidden, nen
+		// panel mo san ngay trong trang - van dat hang duoc nhu thuong.
+		// Sach 3D van an: no can WebGL va JavaScript moi chay, con anh
+		// tinh ben duoi thi khong.
+		. '<noscript><style>'
+		. '.htt-print__overlay[hidden]{display:flex}'
+		. '.htt-print__book3d{display:none}'
+		. '.htt-print__media.is-3d .htt-print__cover{opacity:1}'
+		. '</style></noscript>'
+		. '<div class="htt-print__overlay" id="htt-print-panel" role="dialog" aria-modal="true"'
+		. ' aria-label="In theo yêu cầu" hidden>'
+		. '<div class="htt-print__panel">'
+		. '<button type="button" class="htt-print__close" aria-label="Đóng">&times;</button>'
+		. '%1$s'
+		. '<div class="htt-print__body">'
+		. '%2$s'
+		. '<p class="htt-print__name">%3$s</p>'
+		. '%4$s%5$s'
+		. '%6$s'
+		. '</div></div></div></div>',
+		$cover ? '<div class="htt-print__media">' . $cover . '</div>' . $strip : '',
+		$channel
+			? sprintf(
+				'<span class="htt-print__channel htt-print__channel--%1$s">%2$s</span>',
+				esc_attr( $channel['slug'] ),
+				esc_html( $channel['name'] )
+			)
+			: '',
+		esc_html( htt_print_product_name( $title ) ),
+		'' !== $price ? '<p class="htt-print__price">' . esc_html( $price ) . '</p>' : '',
+		'' !== $note ? '<p class="htt-print__note">' . esc_html( $note ) . '</p>' : '',
+		$action
+	);
+}
+add_shortcode( 'htt_print', 'htt_print_button' );
+
+/**
+ * Remember which article an order came from.
+ *
+ * One product covers every book, so without this the order would only
+ * say "in theo yêu cầu" and leave you guessing which title to print.
+ *
+ * @param array $data Cart item data.
+ * @return array
+ */
+function htt_print_cart_data( $data ) {
+	$post_id = isset( $_REQUEST['htt_post'] ) ? absint( $_REQUEST['htt_post'] ) : 0;
+
+	if ( $post_id && 'post' === get_post_type( $post_id ) ) {
+		$data['htt_print_title'] = get_the_title( $post_id );
+		$data['htt_print_post']  = $post_id;
+	}
+
+	return $data;
+}
+add_filter( 'woocommerce_add_cart_item_data', 'htt_print_cart_data' );
+
+/**
+ * Name each cart line after the article it prints.
+ *
+ * The Store API - which feeds the block cart, the checkout and the
+ * mini-cart - reads the title straight off the product object, with no
+ * filter of its own. Every cart line carries its own copy of that
+ * object, so renaming it here reaches all three without touching the
+ * product in the catalogue.
+ *
+ * Doing it per line also keeps a cart holding two different books
+ * correct, which a filter on `woocommerce_product_title` could not:
+ * that one only receives the product, never the line.
+ *
+ * @param array $item Cart item.
+ * @return array
+ */
+function htt_print_cart_item_name( $item ) {
+	if ( empty( $item['htt_print_title'] ) || empty( $item['data'] ) ) {
+		return $item;
+	}
+
+	$item['data']->set_name( htt_print_product_name( $item['htt_print_title'] ) );
+
+	return $item;
+}
+add_filter( 'woocommerce_add_cart_item', 'htt_print_cart_item_name' );
+
+/**
+ * Keep that name after the page is reloaded.
+ *
+ * The cart is rebuilt from the session on every request, with a fresh
+ * product object each time - without this the line would go back to
+ * reading "In theo yêu cầu".
+ *
+ * @param array $item Cart item.
+ * @return array
+ */
+function htt_print_session_item_name( $item ) {
+	return htt_print_cart_item_name( $item );
+}
+add_filter( 'woocommerce_get_cart_item_from_session', 'htt_print_session_item_name' );
+
+/**
+ * Name the article in the "added to your cart" notice too.
+ *
+ * That message is built from the product id alone, before the cart line
+ * exists, so it would otherwise read "In theo yêu cầu" while the cart
+ * right below names the book.
+ *
+ * @param string $quoted     Product name wrapped in quotes.
+ * @param int    $product_id Product added.
+ * @return string
+ */
+function htt_print_added_notice( $quoted, $product_id ) {
+	if ( (int) $product_id !== (int) get_option( 'htt_print_product_id', 0 ) ) {
+		return $quoted;
+	}
+
+	$post_id = isset( $_REQUEST['htt_post'] ) ? absint( $_REQUEST['htt_post'] ) : 0;
+
+	if ( ! $post_id || 'post' !== get_post_type( $post_id ) ) {
+		return $quoted;
+	}
+
+	return sprintf(
+		'&ldquo;%s&rdquo;',
+		wp_strip_all_tags( htt_print_product_name( get_the_title( $post_id ) ) )
+	);
+}
+add_filter( 'woocommerce_add_to_cart_item_name_in_quotes', 'htt_print_added_notice', 10, 2 );
+
+/**
+ * Which image represents the printed copy of this article?
+ *
+ * Thứ tự: bìa trước của cuốn sách 3D, rồi ảnh sản phẩm đã tải lên, rồi
+ * ảnh đại diện của bài. Mọi nơi hiện sản phẩm - popup, giỏ hàng, thanh
+ * toán, đơn hàng - đều hỏi hàm này, nên người mua không gặp hai cái bìa
+ * khác nhau cho cùng một thứ.
+ *
+ * Bìa 3D đứng đầu vì nó là cuốn sách người mua vừa xem trong popup. Ảnh
+ * đại diện của bài thường là ảnh ngang (hình nền video, ảnh minh hoạ),
+ * không phải bìa sách - để nó lên trước thì giỏ hàng hiện một thứ khác
+ * hẳn với cuốn sách vừa đặt.
+ *
+ * @param int $post_id Article being ordered.
+ * @return int Attachment id, or 0 when the article has no image either.
+ */
+function htt_print_image_id( $post_id ) {
+	$post_id = (int) $post_id;
+
+	if ( function_exists( 'htt_book3d_enabled' ) && htt_book3d_enabled( $post_id ) ) {
+		$front = htt_book3d_front_id( $post_id );
+
+		if ( $front ) {
+			return (int) $front;
+		}
+	}
+
+	$ids = htt_print_image_ids( $post_id );
+
+	return $ids ? (int) $ids[0] : (int) get_post_thumbnail_id( $post_id );
+}
+
+/**
+ * Every photo uploaded for the printed copy, in the editor's order.
+ *
+ * Stored as a comma-separated list of attachment ids. The first one is
+ * the cover: it is what the cart, the checkout and the order show,
+ * since those only have room for a single image.
+ *
+ * Falls back to nothing - callers decide whether to use the article's
+ * featured image instead.
+ *
+ * @param int $post_id Article being ordered.
+ * @return int[] Attachment ids that still exist.
+ */
+function htt_print_image_ids( $post_id ) {
+	$post_id = (int) $post_id;
+
+	if ( ! $post_id ) {
+		return array();
+	}
+
+	$raw = (string) get_post_meta( $post_id, 'htt_print_image', true );
+
+	if ( '' === $raw || '0' === $raw ) {
+		return array();
+	}
+
+	$ids = array_filter( array_map( 'absint', explode( ',', $raw ) ) );
+
+	// Drop anything deleted from the media library since it was picked.
+	$ids = array_filter(
+		$ids,
+		function ( $id ) {
+			return 'attachment' === get_post_type( $id );
+		}
+	);
+
+	return array_values( $ids );
+}
+
+/**
+ * What the printed copy is called once an article is attached.
+ *
+ * One product serves every title, so "In theo yêu cầu" on its own tells
+ * the buyer nothing. Naming the line after the article means the cart,
+ * the checkout and the order all say which book is being printed.
+ *
+ * @param string $title Article title.
+ * @return string
+ */
+function htt_print_product_name( $title ) {
+	$title = trim( (string) $title );
+
+	if ( '' === $title ) {
+		return 'In theo yêu cầu';
+	}
+
+	return sprintf( 'In nội dung [%s] theo yêu cầu', $title );
+}
+
+/**
+ * Which post does this cart item belong to?
+ *
+ * @param array $item Cart item.
+ * @return int
+ */
+function htt_print_item_post( $item ) {
+	return isset( $item['htt_print_post'] ) ? (int) $item['htt_print_post'] : 0;
+}
+
+/**
+ * Swap the product placeholder for the book's own cover.
+ *
+ * One product stands in for every title, so it carries no image of its
+ * own - the cart would show a grey placeholder. The article's featured
+ * image is the cover being ordered, so use that instead.
+ *
+ * This hook feeds the block cart, the checkout and the mini-cart, which
+ * all read from the Store API.
+ *
+ * @param array $images Image objects.
+ * @param array $item   Cart item.
+ * @return array
+ */
+function htt_print_api_image( $images, $item ) {
+	$post_id = htt_print_item_post( $item );
+
+	if ( ! $post_id ) {
+		return $images;
+	}
+
+	$id = htt_print_image_id( $post_id );
+
+	if ( ! $id ) {
+		return $images;
+	}
+
+	$full  = wp_get_attachment_image_src( $id, 'full' );
+	$thumb = wp_get_attachment_image_src( $id, htt_print_thumb_size() );
+
+	if ( ! $full ) {
+		return $images;
+	}
+
+	return array(
+		(object) array(
+			'id'        => (int) $id,
+			'src'       => $full[0],
+			'thumbnail' => $thumb ? $thumb[0] : $full[0],
+			'srcset'    => (string) wp_get_attachment_image_srcset( $id, 'full' ),
+			'sizes'     => (string) wp_get_attachment_image_sizes( $id, 'full' ),
+			'name'      => get_the_title( $id ),
+			'alt'       => get_the_title( $post_id ),
+		),
+	);
+}
+add_filter( 'woocommerce_store_api_cart_item_images', 'htt_print_api_image', 10, 2 );
+
+/**
+ * Same swap for the classic cart templates.
+ *
+ * @param string $html Thumbnail markup.
+ * @param array  $item Cart item.
+ * @return string
+ */
+function htt_print_cart_thumb( $html, $item ) {
+	$post_id = htt_print_item_post( $item );
+	$image   = htt_print_image_id( $post_id );
+
+	if ( ! $image ) {
+		return $html;
+	}
+
+	return wp_get_attachment_image(
+		$image,
+		htt_print_thumb_size(),
+		false,
+		array(
+			'alt'   => get_the_title( $post_id ),
+			'class' => 'attachment-woocommerce_thumbnail htt-print-thumb',
+		)
+	);
+}
+add_filter( 'woocommerce_cart_item_thumbnail', 'htt_print_cart_thumb', 10, 2 );
+
+/**
+ * Keep the cover on the finished order too.
+ *
+ * The cart item is gone by then, so the post id is read back from the
+ * line item meta saved at checkout.
+ *
+ * @param string                $html Thumbnail markup.
+ * @param WC_Order_Item_Product $line Order line.
+ * @return string
+ */
+function htt_print_order_thumb( $html, $line ) {
+	if ( ! is_a( $line, 'WC_Order_Item_Product' ) ) {
+		return $html;
+	}
+
+	$post_id = (int) $line->get_meta( '_htt_print_post' );
+	$image   = htt_print_image_id( $post_id );
+
+	if ( ! $image ) {
+		return $html;
+	}
+
+	$src = wp_get_attachment_image_src( $image, htt_print_thumb_size() );
+
+	if ( ! $src ) {
+		return $html;
+	}
+
+	// Email đọc ảnh theo thuộc tính width/height trong thẻ, không theo
+	// CSS. Ảnh gốc cao hơn rộng, nên nếu để nguyên 600×924 thì một dòng
+	// hàng sẽ chiếm gần hết màn hình điện thoại. Thu về đúng bề ngang
+	// WooCommerce yêu cầu, chiều cao tính theo tỉ lệ thật - vẫn không cắt.
+	$box = (int) apply_filters( 'woocommerce_email_item_thumbnail_width', 64 );
+	list( , $w, $h ) = $src;
+	$ratio  = $w > 0 ? $h / $w : 1;
+	$height = (int) round( $box * $ratio );
+
+	return sprintf(
+		'<img src="%1$s" alt="%2$s" width="%3$d" height="%4$d"'
+		. ' class="htt-print-thumb" style="width:%3$dpx;height:auto;max-width:100%%" />',
+		esc_url( $src[0] ),
+		esc_attr( get_the_title( $post_id ) ),
+		$box,
+		$height
+	);
+}
+add_filter( 'woocommerce_order_item_thumbnail', 'htt_print_order_thumb', 10, 2 );
+
+/**
+ * Thêm ảnh bìa vào bảng sản phẩm của trang xác nhận và trang xem đơn.
+ *
+ * Hai trang này không hiện ảnh sản phẩm nào - cả bản khối mới lẫn bản
+ * template cũ đều chỉ in tên và giá. Người mua mở lại đơn cũ sau vài
+ * tuần thì chỉ còn một dòng chữ, không nhận ra mình đã đặt cuốn nào.
+ *
+ * Chèn qua tên sản phẩm thay vì ghi đè template: khối mới dựng markup
+ * thẳng trong PHP, không đọc template nào cả, nhưng cả hai đều chạy
+ * tên sản phẩm qua đúng filter này.
+ *
+ * @param string        $name Tên sản phẩm, có thể đã bọc trong thẻ <a>.
+ * @param WC_Order_Item $item Dòng hàng.
+ * @return string
+ */
+function htt_print_order_name_image( $name, $item ) {
+	// Email và trang quản trị cũng chạy qua filter này, mà cả hai đã có
+	// cột ảnh riêng - thêm ở đây nữa thì một dòng hàng có hai cái bìa.
+	// Email: cờ do htt_print_email_items() bật/tắt quanh lúc dựng.
+	// Quản trị: bảng sản phẩm có sẵn cột thumb, xem htt_print_admin_thumb().
+	if ( ! is_a( $item, 'WC_Order_Item_Product' ) || is_admin()
+		|| ! empty( $GLOBALS['htt_print_in_email'] ) ) {
+		return $name;
+	}
+
+	$post_id = (int) $item->get_meta( '_htt_print_post' );
+	$image   = htt_print_image_id( $post_id );
+
+	if ( ! $image ) {
+		return $name;
+	}
+
+	return sprintf(
+		'<span class="htt-order-item">%1$s<span class="htt-order-item__name">%2$s</span></span>',
+		wp_get_attachment_image(
+			$image,
+			htt_print_thumb_size(),
+			false,
+			array(
+				'class'   => 'htt-order-item__thumb',
+				'alt'     => '',
+				'loading' => 'lazy',
+			)
+		),
+		$name
+	);
+}
+add_filter( 'woocommerce_order_item_name', 'htt_print_order_name_image', 10, 2 );
+
+/**
+ * Bìa sách cho cột ảnh của bảng sản phẩm trong trang quản trị đơn hàng.
+ *
+ * Bảng này đã có sẵn một cột ảnh, nhưng nó rỗng: một sản phẩm dùng chung
+ * cho mọi đầu sách nên bản thân sản phẩm không mang ảnh nào.
+ *
+ * @param string $html    Thẻ ảnh của sản phẩm, thường là rỗng.
+ * @param int    $item_id Mã dòng hàng.
+ * @param object $item    Dòng hàng.
+ * @return string
+ */
+function htt_print_admin_thumb( $html, $item_id, $item = null ) {
+	if ( ! is_a( $item, 'WC_Order_Item_Product' ) ) {
+		return $html;
+	}
+
+	$post_id = (int) $item->get_meta( '_htt_print_post' );
+	$image   = htt_print_image_id( $post_id );
+
+	if ( ! $image ) {
+		return $html;
+	}
+
+	// Cột ảnh trong trang quản trị rộng đúng 38px và không có CSS nào của
+	// giao diện với tới được - style.css chỉ tải ở ngoài trang. Vì vậy
+	// chiều cao đặt thẳng vào thẻ; bề rộng để auto nên bìa dọc không bị
+	// bóp thành vuông.
+	//
+	// Cỡ 'medium' thay vì cỡ dùng ngoài trang: một ô 38px không cần ảnh
+	// 600px. WordPress chỉ cắt khi ảnh gốc lớn hơn khung theo cả hai
+	// chiều, mà bìa sách thì cao hơn rộng nên nó được thu nhỏ, không cắt.
+	return wp_get_attachment_image(
+		$image,
+		'medium',
+		false,
+		array(
+			'alt'   => '',
+			'style' => 'width:auto;height:38px;max-width:none;display:block;border-radius:2px',
+		)
+	);
+}
+add_filter( 'woocommerce_admin_order_item_thumbnail', 'htt_print_admin_thumb', 10, 3 );
+
+/**
+ * Đánh dấu khoảng thời gian đang dựng bảng sản phẩm trong email.
+ *
+ * Email có cột ảnh riêng, nên trong khoảng này tên sản phẩm phải để
+ * trơn. Bật trước mọi hàm nối vào hook (ưu tiên 1) và tắt sau tất cả
+ * (ưu tiên 999), vì WooCommerce nối hai hàm vào đây ở mức 10.
+ *
+ * @param bool $start Vào hay ra khỏi khoảng.
+ * @return void
+ */
+function htt_print_email_items( $start ) {
+	$GLOBALS['htt_print_in_email'] = (bool) $start;
+}
+add_action(
+	'woocommerce_email_order_details',
+	function () {
+		htt_print_email_items( true );
+	},
+	1
+);
+add_action(
+	'woocommerce_email_order_details',
+	function () {
+		htt_print_email_items( false );
+	},
+	999
+);
+
+/**
+ * Cỡ ảnh dùng cho giỏ hàng, thanh toán và đơn hàng.
+ *
+ * KHÔNG dùng woocommerce_thumbnail: cỡ đó cắt vuông 300×300, nên một bìa
+ * sách dọc sẽ mất cả phần trên lẫn phần dưới - đúng chỗ thường in tên
+ * sách và tên tác giả. woocommerce_single rộng 600px, cao tuỳ ảnh, giữ
+ * nguyên tỉ lệ thật.
+ *
+ * Cỡ này chỉ tồn tại khi WooCommerce đang chạy. Không có thì dùng ảnh
+ * gốc: các cỡ có sẵn của WordPress trên site này đều đang đặt cắt vuông,
+ * nên ảnh gốc là thứ duy nhất chắc chắn còn nguyên tỉ lệ.
+ *
+ * @return string
+ */
+function htt_print_thumb_size() {
+	return function_exists( 'wc_get_image_size' ) && wc_get_image_size( 'woocommerce_single' )
+		? 'woocommerce_single'
+		: 'full';
+}
+
+/**
+ * Copy the title onto the saved order line.
+ *
+ * @param WC_Order_Item_Product $line   Order line.
+ * @param string                $key    Cart item key.
+ * @param array                 $values Cart item.
+ * @return void
+ */
+function htt_print_order_meta( $line, $key, $values ) {
+	// The line is already named after the article, so a separate "Sách"
+	// row would only repeat it.
+
+	// Underscore keeps it out of the customer-facing meta list; it is
+	// only here so the order can find the cover image later.
+	if ( ! empty( $values['htt_print_post'] ) ) {
+		$line->add_meta_data( '_htt_print_post', (int) $values['htt_print_post'], true );
+	}
+}
+add_action( 'woocommerce_checkout_create_order_line_item', 'htt_print_order_meta', 10, 3 );
 
 /**
  * Add the video URL box to the post editor.
@@ -1368,13 +2491,15 @@ function htt_unautop_featured( $content, $block ) {
 		return $content;
 	}
 
-	if ( false === strpos( $content, 'htt-featured' ) ) {
+	if ( false === strpos( $content, 'htt-featured' )
+		&& false === strpos( $content, 'htt-print' ) ) {
 		return $content;
 	}
 
 	// Drop the <p>/<br> wrappers wpautop added around our own markup.
-	$content = preg_replace( '#<p>\s*(<(?:section|ul|li|div|h[23]|span|time|a)\b)#i', '$1', $content );
-	$content = preg_replace( '#(</(?:section|ul|li|div|h[23]|span|time|a)>)\s*</p>#i', '$1', $content );
+	$tags    = 'section|ul|li|div|h[23]|span|time|a|button|svg|p|form|label|input';
+	$content = preg_replace( '#<p>\s*(<(?:' . $tags . ')\b)#i', '$1', $content );
+	$content = preg_replace( '#(</(?:' . $tags . ')>)\s*</p>#i', '$1', $content );
 	$content = preg_replace( '#<p>\s*</p>#i', '', $content );
 	$content = str_replace( '<br />', '', $content );
 

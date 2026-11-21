@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Sách 3D – Đọc thử</title>
+  <link rel="stylesheet" href="css/book3d.css" id="book3d-css">
+</head>
+<body>
+  <div id="stage">
+    <canvas id="book-canvas" aria-label="Sách 3D – đọc thử"></canvas>
+
+    <div id="loader" role="status">
+      <div class="spinner"></div>
+      <span id="loader-text">Đang tải sách…</span>
+    </div>
+
+    <button id="hint" class="hidden" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5C4.7 20 4 19.3 4 18.5v-13zM13 4h5.5c.8 0 1.5.7 1.5 1.5v13c0 .8-.7 1.5-1.5 1.5H13V4z"/></svg>
+      <span id="hint-text">Bấm vào sách để đọc thử</span>
+    </button>
+
+    <div id="toolbar" class="hidden" role="toolbar" aria-label="Điều khiển sách">
+      <button id="btn-prev" type="button" title="Trang trước (←)" aria-label="Trang trước">
+        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <span id="page-label" aria-live="polite">–</span>
+      <input id="seek" type="range" min="1" max="1" step="1" value="1" aria-label="Chuyển nhanh tới trang">
+      <button id="btn-next" type="button" title="Trang sau (→)" aria-label="Trang sau">
+        <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+      </button>
+      <span class="sep"></span>
+      <button id="btn-zoom" type="button" title="Phóng to" aria-label="Phóng to">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5M11 8v6M8 11h6"/></svg>
+      </button>
+      <button id="btn-full" type="button" title="Toàn màn hình" aria-label="Toàn màn hình">
+        <svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+      </button>
+      <button id="btn-close" type="button" title="Gập sách (Esc)" aria-label="Gập sách">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div id="cta" class="hidden">
+      <strong id="cta-title"></strong>
+      <p id="cta-text"></p>
+      <a id="cta-btn" href="#" target="_top" rel="noopener"></a>
+    </div>
+
+    <div id="fallback" class="hidden"></div>
+  </div>
+
+  <noscript><p style="padding:24px;text-align:center">Vui lòng bật JavaScript để xem sách.</p></noscript>
+  <script>
+    // ?ver=… từ trang chứa đi tiếp xuống mã nguồn, để lần cập nhật bộ sách
+    // nào cũng tới được người đọc thay vì nằm lại trong bộ nhớ đệm trình
+    // duyệt. Thiếu tham số này thì tải như thường.
+    (function () {
+      var ver = new URLSearchParams(location.search).get('ver');
+      var q = ver ? '?ver=' + encodeURIComponent(ver) : '';
+
+      if (ver) {
+        var css = document.getElementById('book3d-css');
+        if (css) css.href = 'css/book3d.css' + q;
+
+        // Import map để dấu phiên bản đi tiếp xuống các mô-đun con:
+        // ?ver trên book3d.js không tự lan sang pages.js và store.js.
+        // Three.js không nằm đây - nó là thư viện không đổi, cứ để bộ
+        // nhớ đệm giữ lại.
+        // Khoá phải là địa chỉ đã giải xong: book3d.js nằm trong js/ nên
+        // './pages.js' của nó trỏ tới <thư mục này>/js/pages.js.
+        var base = location.origin + location.pathname.replace(/[^/]*$/, '');
+        var map = document.createElement('script');
+        map.type = 'importmap';
+        // Cả khoá lẫn giá trị đều phải là địa chỉ đầy đủ: địa chỉ tương
+        // đối kiểu "js/pages.js" bị import map coi là tên mô-đun bare.
+        map.textContent = JSON.stringify({
+          imports: {
+            [base + 'js/pages.js']: base + 'js/pages.js' + q,
+            [base + 'js/store.js']: base + 'js/store.js' + q
+          }
+        });
+        document.head.appendChild(map);
+      }
+
+      var s = document.createElement('script');
+      s.type = 'module';
+      s.src = 'js/book3d.js' + q;
+      document.head.appendChild(s);
+    }());
+  </script>
+</body>
+</html>

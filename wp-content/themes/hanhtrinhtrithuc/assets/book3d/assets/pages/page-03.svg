@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="2050" viewBox="0 0 1400 2050">
+<defs>
+  <filter id="g" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer><feFuncA type="table" tableValues="0 0.08"/></feComponentTransfer>
+    <feBlend in2="SourceGraphic" mode="multiply"/>
+  </filter></defs>
+
+  <rect width="100%" height="100%" fill="#fbf9f3" filter="url(#g)"/>
+  <text x="700" y="420" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="40" letter-spacing="8" fill="#777" text-anchor="middle">CHƯƠNG I</text>
+  <text x="700" y="540" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="84" fill="#2b2a28" text-anchor="middle">Người lạ cuối làng</text>
+  <line x1="620" y1="600" x2="780" y2="600" stroke="#999" stroke-width="2"/>
+  <text x="230" y="760" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">Buổi sáng hôm ấy, sương còn phủ kín cánh đồng khi ông</text>
+<text x="170" y="826" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">lão bước ra khỏi căn nhà gỗ ở cuối làng. Ông đi chậm,</text>
+<text x="170" y="892" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">tay nắm chặt cây gậy, mắt nhìn về phía rặng lúa đang</text>
+<text x="170" y="958" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">ngả vàng.</text>
+<text x="230" y="1040.5" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">Không ai trong làng biết ông đến từ đâu. Người ta chỉ</text>
+<text x="170" y="1106.5" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">nhớ rằng vào một mùa đông rất xa, ông xuất hiện với</text>
+<text x="170" y="1172.5" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">chiếc túi vải bạc màu và đôi bàn tay biết chữa lành</text>
+<text x="170" y="1238.5" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">mọi vết thương.</text>
+<text x="230" y="1321" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">Đây là đoạn văn bản giữ chỗ. Nội dung thật của cuốn</text>
+<text x="170" y="1387" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">sách sẽ được thay vào khi có file PDF. Mỗi trang sẽ</text>
+<text x="170" y="1453" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">được xuất thành ảnh để hiển thị sắc nét trên mọi màn</text>
+<text x="170" y="1519" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">hình.</text>
+<text x="230" y="1601.5" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">Gió thổi qua những bông lúa trĩu hạt, tạo nên tiếng</text>
+<text x="170" y="1667.5" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">xào xạc như lời thì thầm của đất trời. Ông dừng lại,</text>
+<text x="170" y="1733.5" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">cúi xuống ngắt một nhành cỏ dại, đưa lên mũi và mỉm</text>
+<text x="170" y="1799.5" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">cười.</text>
+  <text x="700" y="1940" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="32" fill="#666" text-anchor="middle">3</text>
+  <text x="1310" y="90" font-family="Helvetica, Arial, sans-serif" font-size="26" letter-spacing="3" fill="#999" opacity="0.75" text-anchor="end">TRANG TẠM · 3</text>
+
+</svg>

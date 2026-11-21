@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Trình soạn sách 3D</title>
+  <link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5C4.7 20 4 19.3 4 18.5v-13zM13 4h5.5c.8 0 1.5.7 1.5 1.5v13c0 .8-.7 1.5-1.5 1.5H13V4z"/></svg>
+      <h1>Trình soạn sách 3D</h1>
+      <span id="status" class="status">Đang tải…</span>
+    </div>
+    <div class="actions">
+      <label class="btn ghost" title="Mở một file book.json đã lưu">
+        Nhập book.json<input id="import-file" type="file" accept=".json,application/json" hidden>
+      </label>
+      <button id="btn-reset" class="btn ghost" type="button">Khôi phục mẫu</button>
+      <button id="btn-export" class="btn primary" type="button">Tải book.json</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="panel">
+      <p class="note">
+        Mọi thay đổi được lưu tự động <b>trong trình duyệt này</b> và hiện ngay ở khung xem trước.
+        Khi xong, bấm <b>Tải book.json</b> rồi tải file đó lên host để thay file cũ (ảnh đã được nhúng sẵn trong file).
+      </p>
+
+      <!-- Thông tin sách -->
+      <section class="card">
+        <h2>Thông tin sách</h2>
+        <div class="grid2">
+          <label>Tên sách<input data-bind="title" placeholder="VD: Thầy Lang"></label>
+          <label>Tác giả<input data-bind="author" placeholder="VD: Tadeusz Dołęga-Mostowicz"></label>
+        </div>
+        <div class="grid3">
+          <label>Rộng (cm)<input data-bind="size.width" type="number" min="5" max="40" step="0.1"></label>
+          <label>Cao (cm)<input data-bind="size.height" type="number" min="5" max="50" step="0.1"></label>
+          <label>Dày gáy (cm)<input id="thickness" data-bind="size.thickness" type="number" min="0.1" max="10" step="0.1"></label>
+        </div>
+        <div class="thick-row">
+          <label class="check"><input id="auto-thick" type="checkbox"> Tự tính độ dày gáy theo số trang</label>
+          <label class="inline" id="paper-wrap">Giấy
+            <select data-bind="paperThickness">
+              <option value="0.08">Mỏng (0,08 mm/tờ)</option>
+              <option value="0.1">Thường (0,1 mm/tờ)</option>
+              <option value="0.13">Dày (0,13 mm/tờ)</option>
+              <option value="0.16">Rất dày (0,16 mm/tờ)</option>
+            </select>
+          </label>
+        </div>
+        <p id="thick-note" class="muted small thick-note"></p>
+        <div class="grid2">
+          <label>Màu giấy<input data-bind="paperColor" type="color"></label>
+          <label>Số trang đầu tiên<input data-bind="pageNumberStart" type="number" min="1" step="1"></label>
+        </div>
+      </section>
+
+      <!-- Ảnh bìa -->
+      <section class="card" data-focus="cover">
+        <h2>Ảnh bìa</h2>
+        <p class="muted small edge-note">Viền bìa và gáy tự lấy màu theo mép của từng ảnh (như bìa in liền),
+          ảnh nhiều màu thì viền cũng đổi màu đúng chỗ.</p>
+        <div class="covers">
+          <div class="imgfield" data-path="cover.front" data-kind="cover" data-default="assets/cover-front.svg">
+            <div class="thumb"><img alt=""><span>Kéo thả ảnh vào đây</span></div>
+            <div class="meta">
+              <strong>Bìa trước</strong>
+              <small class="hint-size"></small>
+              <div class="row">
+                <label class="btn small">Chọn ảnh<input type="file" accept="image/*" hidden></label>
+                <button class="btn small ghost" data-act="default" type="button">Ảnh mẫu</button>
+              </div>
+              <small class="warn"></small>
+            </div>
+          </div>
+          <div class="imgfield" data-path="cover.back" data-kind="cover" data-default="assets/cover-back.svg">
+            <div class="thumb"><img alt=""><span>Kéo thả ảnh vào đây</span></div>
+            <div class="meta">
+              <strong>Bìa sau</strong>
+              <small class="hint-size"></small>
+              <div class="row">
+                <label class="btn small">Chọn ảnh<input type="file" accept="image/*" hidden></label>
+                <button class="btn small ghost" data-act="default" type="button">Ảnh mẫu</button>
+              </div>
+              <small class="warn"></small>
+            </div>
+          </div>
+          <div class="imgfield spine" data-path="cover.spine" data-kind="spine" data-default="assets/cover-spine.svg">
+            <div class="thumb"><img alt=""><span>Gáy</span></div>
+            <div class="meta">
+              <strong>Gáy sách</strong>
+              <small class="hint-size"></small>
+              <div class="row">
+                <label class="btn small">Chọn ảnh<input type="file" accept="image/*" hidden></label>
+                <button class="btn small ghost" data-act="default" type="button">Ảnh mẫu</button>
+              </div>
+              <small class="warn"></small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Nội dung -->
+      <section class="card">
+        <h2>Nội dung sách <span id="page-count" class="pill">0 trang</span></h2>
+        <div class="row content-tools">
+          <button class="btn small" data-ins="chapter" type="button" title="Chèn dòng tiêu đề chương tại vị trí con trỏ">+ Chương mới</button>
+          <button class="btn small" data-ins="break" type="button" title="Bắt đầu trang mới tại vị trí con trỏ">Ngắt trang</button>
+          <label class="btn small" title="Chèn một trang ảnh tại vị trí con trỏ">+ Chèn ảnh<input id="img-insert" type="file" accept="image/*" hidden></label>
+          <label class="inline">Cỡ chữ
+            <select data-bind="fontScale">
+              <option value="0.9">Nhỏ</option>
+              <option value="1">Vừa</option>
+              <option value="1.12">Lớn</option>
+            </select>
+          </label>
+        </div>
+        <textarea id="content" class="content" spellcheck="false"
+          placeholder="Dán toàn bộ nội dung sách vào đây. Sách sẽ tự chia trang.&#10;&#10;# Chương I | Tên chương&#10;Đoạn văn thứ nhất…&#10;Đoạn văn thứ hai…"></textarea>
+        <p id="content-stats" class="muted small stats"></p>
+        <details class="syntax">
+          <summary>Cách viết nội dung</summary>
+          <ul>
+            <li>Mỗi lần xuống dòng là một <b>đoạn mới</b> (dòng trống được bỏ qua). Sách tự chia trang, căn đều hai bên, thụt đầu dòng.</li>
+            <li><code># Chương I | Người lạ cuối làng</code> — mở <b>chương mới</b> ở trang mới (phần trước dấu <code>|</code> là nhãn chương, có thể bỏ).
+              Viết <code># Chương II: Tên chương</code> cũng được.</li>
+            <li><code>---</code> — <b>ngắt trang</b>: nội dung sau đó sang trang mới.</li>
+            <li><code>[ảnh: anh1]</code> — một <b>trang ảnh</b> (dùng nút <i>+ Chèn ảnh</i> để thêm).</li>
+          </ul>
+        </details>
+        <div id="media" class="media"></div>
+      </section>
+
+      <!-- Toàn bộ trang -->
+      <section class="card">
+        <h2>Tất cả các trang <span id="page-count-2" class="pill">0</span></h2>
+        <p class="muted small">Trang lẻ bên phải, trang chẵn bên trái. Bấm vào một trang để xem trong khung bên phải;
+          đặt con trỏ trong ô nội dung cũng tự chuyển tới trang tương ứng.</p>
+        <div id="pages" class="page-grid"></div>
+      </section>
+
+      <!-- Nút mua sách -->
+      <section class="card">
+        <h2>Cuối phần đọc thử</h2>
+        <label>Tiêu đề<input data-bind="cta.title"></label>
+        <label>Mô tả<input data-bind="cta.text"></label>
+        <div class="grid2">
+          <label>Chữ trên nút<input data-bind="cta.button"></label>
+          <label>Link mua sách<input data-bind="cta.url" type="url" placeholder="https://"></label>
+        </div>
+        <label>Chữ gợi ý khi sách đang gập<input data-bind="texts.hint"></label>
+      </section>
+    </aside>
+
+    <main class="preview">
+      <div class="preview-bar">
+        <span>Xem trước</span>
+        <span id="preview-where" class="muted"></span>
+        <button id="btn-show-cover" class="btn small ghost" type="button">Xem bìa</button>
+      </div>
+      <iframe id="preview" title="Xem trước sách 3D" allow="fullscreen"></iframe>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script type="module" src="js/editor.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="2050" viewBox="0 0 1400 2050">
+<defs>
+  <filter id="g" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer><feFuncA type="table" tableValues="0 0.08"/></feComponentTransfer>
+    <feBlend in2="SourceGraphic" mode="multiply"/>
+  </filter></defs>
+
+  <rect width="100%" height="100%" fill="#fbf9f3" filter="url(#g)"/>
+  
+  <text x="170" y="170" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="34" font-style="italic" fill="#666" text-anchor="start">4</text>
+  <text x="700" y="170" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="30" letter-spacing="4" fill="#666" text-anchor="middle">TÊN TÁC GIẢ</text>
+  <text x="230" y="320" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">Đứa bé gái đứng nép sau cánh cổng, đôi mắt tròn xoe</text>
+<text x="170" y="386" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">nhìn theo. Nó đã nghe bà kể rất nhiều chuyện về ông</text>
+<text x="170" y="452" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">thầy lang lạ lùng ấy, nhưng đây là lần đầu tiên nó</text>
+<text x="170" y="518" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">thấy ông gần đến thế.</text>
+<text x="230" y="600.5" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">– Cháu lại đây, – ông gọi khẽ. – Đừng sợ.</text>
+<text x="230" y="683" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">Con bé ngập ngừng một lúc rồi rụt rè bước tới. Ông đặt</text>
+<text x="170" y="749" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">nhành cỏ vào lòng bàn tay nhỏ xíu của nó và nói rằng</text>
+<text x="170" y="815" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">mỗi loài cây đều mang trong mình một câu chuyện.</text>
+<text x="230" y="897.5" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">– Cây này chữa được gì hả ông?</text>
+<text x="230" y="980" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">– Nó chữa được nỗi buồn, – ông đáp, – nếu cháu biết</text>
+<text x="170" y="1046" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">cách lắng nghe.</text>
+<text x="230" y="1128.5" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">Đoạn văn bản giữ chỗ tiếp tục để minh hoạ cách trang</text>
+<text x="170" y="1194.5" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">sách hiển thị khi lật. Khi thay bằng trang thật, bố</text>
+<text x="170" y="1260.5" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">cục, phông chữ và hình minh hoạ sẽ giữ nguyên như bản</text>
+<text x="170" y="1326.5" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">in.</text>
+<text x="230" y="1409" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">Mặt trời lên cao dần. Cánh đồng bừng sáng trong sắc</text>
+<text x="170" y="1475" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">vàng ấm áp, và lần đầu tiên sau nhiều năm, ông lão cảm</text>
+<text x="170" y="1541" font-family="Georgia, 'Times New Roman', 'Noto Serif', serif" font-size="38" fill="#2b2a28">thấy mình đã thực sự tìm được nơi để ở lại.</text>
+  <text x="90" y="90" font-family="Helvetica, Arial, sans-serif" font-size="26" letter-spacing="3" fill="#999" opacity="0.75" text-anchor="start">TRANG TẠM · 4</text>
+
+</svg>

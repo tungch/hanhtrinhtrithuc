@@ -1,0 +1,50 @@
+{
+  "title": "Tên Sách",
+  "author": "Tên Tác Giả",
+  "size": {
+    "width": 14,
+    "height": 20.5,
+    "thickness": 2.4
+  },
+  "autoThickness": true,
+  "paperThickness": 0.1,
+  "cover": {
+    "front": "assets/cover-front.svg",
+    "back": "assets/cover-back.svg",
+    "spine": "assets/cover-spine.svg",
+    "color": "#4a6a9e"
+  },
+  "fontScale": 1,
+  "content": "[ảnh: anh1]\nTên sách gốc: ORIGINAL TITLE\nBản quyền tiếng Việt © Nhà xuất bản. Mọi hình thức sao chép, trích dẫn hay phát hành không có sự đồng ý của đơn vị giữ bản quyền đều là vi phạm pháp luật.\nĐây là trang thông tin giữ chỗ.\n\n# Chương I | Người lạ cuối làng\nBuổi sáng hôm ấy, sương còn phủ kín cánh đồng khi ông lão bước ra khỏi căn nhà gỗ ở cuối làng. Ông đi chậm, tay nắm chặt cây gậy, mắt nhìn về phía rặng lúa đang ngả vàng.\nKhông ai trong làng biết ông đến từ đâu. Người ta chỉ nhớ rằng vào một mùa đông rất xa, ông xuất hiện với chiếc túi vải bạc màu và đôi bàn tay biết chữa lành mọi vết thương.\nGió thổi qua những bông lúa trĩu hạt, tạo nên tiếng xào xạc như lời thì thầm của đất trời. Ông dừng lại, cúi xuống ngắt một nhành cỏ dại, đưa lên mũi và mỉm cười.\nĐứa bé gái đứng nép sau cánh cổng, đôi mắt tròn xoe nhìn theo. Nó đã nghe bà kể rất nhiều chuyện về ông thầy lang lạ lùng ấy, nhưng đây là lần đầu tiên nó thấy ông gần đến thế.\n– Cháu lại đây, – ông gọi khẽ. – Đừng sợ.\nCon bé ngập ngừng một lúc rồi rụt rè bước tới. Ông đặt nhành cỏ vào lòng bàn tay nhỏ xíu của nó và nói rằng mỗi loài cây đều mang trong mình một câu chuyện.\n– Cây này chữa được gì hả ông?\n– Nó chữa được nỗi buồn, – ông đáp, – nếu cháu biết cách lắng nghe.\nMặt trời lên cao dần. Cánh đồng bừng sáng trong sắc vàng ấm áp, và lần đầu tiên sau nhiều năm, ông lão cảm thấy mình đã thực sự tìm được nơi để ở lại.\nNhững ngày sau đó, con bé thường xuyên ghé qua căn nhà gỗ. Nó giúp ông phơi những bó lá trên giàn tre, nhặt hạt giống vào từng túi vải nhỏ và ghi nhớ tên của từng loài cây. Có loài mọc ven suối, có loài chỉ nở hoa vào lúc nửa đêm, có loài phải đợi sau cơn mưa đầu mùa mới hái được.\nÔng lão ít khi nói về bản thân. Mỗi khi con bé hỏi về quê hương của ông, ông chỉ cười và chỉ tay về phía dãy núi xa, nơi những đám mây trắng lững lờ trôi như đàn cừu không người chăn.\n– Ở đó có gì hả ông?\n– Có một ngôi nhà, – ông nói, – và một người đã từng đợi ông về.\nCon bé không hỏi thêm. Nó cảm thấy trong giọng nói của ông có một điều gì đó rất xa xăm, giống như tiếng chuông chùa vọng lại từ bên kia sông vào những buổi chiều lặng gió.\n\n# Chương II | Mùa nước nổi\nNăm ấy nước lên sớm hơn mọi năm. Chỉ sau ba đêm mưa lớn, con đường đất dẫn vào làng đã chìm dưới lớp nước đục ngầu, và những thửa ruộng thấp biến thành một mặt hồ mênh mông.\nNgười trong làng lo lắng nhìn trời. Trẻ con thì thích thú chèo những chiếc thuyền thúng nhỏ đi bắt cá, còn người già ngồi bên bậc cửa, kể cho nhau nghe về những mùa lũ đã qua.\nĐêm thứ tư, có tiếng gõ cửa dồn dập ở căn nhà gỗ cuối làng. Ông lão thắp đèn, mở cửa và thấy một người đàn ông ướt sũng, trên tay bế một đứa trẻ đang sốt cao.\n– Thầy cứu con tôi với, – người đàn ông nói trong hơi thở đứt quãng. – Trạm xá bị ngập cả rồi.\nÔng lão không nói gì. Ông đỡ lấy đứa trẻ, đặt nó lên chiếc giường tre phủ chiếu cói, rồi lặng lẽ mở chiếc túi vải bạc màu. Bên trong là hàng chục gói lá khô được buộc cẩn thận bằng dây chuối, mỗi gói có một dấu hiệu nhỏ mà chỉ mình ông hiểu.\nÔng đun nước, thả vào nồi một nắm lá, rồi ngồi canh bếp cho đến khi mùi hăng nồng lan khắp căn phòng. Người cha ngồi bên cạnh, hai bàn tay đan chặt vào nhau, mắt không rời khỏi gương mặt đỏ bừng của con.\nGần sáng, cơn sốt hạ. Đứa trẻ mở mắt, khẽ gọi cha. Người đàn ông bật khóc, quỳ xuống trước ông lão, nhưng ông chỉ đỡ anh dậy và nói rằng người cần cảm ơn là cây cỏ ngoài kia, chứ không phải ông.\nCâu chuyện về đêm hôm ấy lan đi rất nhanh. Chỉ trong vài ngày, người từ các làng bên cạnh đã chèo thuyền tìm đến. Có người mang theo gạo, có người mang theo cá, có người chẳng mang gì ngoài một nỗi lo âu không biết tỏ cùng ai.\nÔng lão tiếp tất cả, không từ chối một ai. Con bé ngày nào cũng có mặt, khi thì giúp ông nhóm bếp, khi thì ngồi ghi lại tên những người đã đến và những vị thuốc ông đã dùng vào một cuốn sổ nhỏ có bìa bằng giấy dó.\n[ảnh: anh2]\n\n# Chương III | Cuốn sổ bìa giấy dó\nKhi nước rút, làng trở lại nhịp sống thường ngày. Những thửa ruộng phủ một lớp phù sa mới, đen và mịn như nhung. Người ta bắt đầu gieo mạ, sửa lại bờ, dựng lại những mái nhà bị gió cuốn đi.\nCon bé vẫn giữ cuốn sổ. Mỗi tối, nó lại giở ra đọc, nhẩm tên từng loài cây và cố nhớ xem ông đã dùng chúng như thế nào. Có những trang nó vẽ lại hình chiếc lá, có những trang nó chỉ ghi một dòng ngắn ngủi: người đàn bà ở bến đò, đau lưng, ba lần.\nMột buổi chiều, ông lão gọi nó lại gần và bảo nó đọc to những gì đã viết. Ông nghe rất chăm chú, thỉnh thoảng gật đầu, thỉnh thoảng sửa lại một cái tên mà nó ghi nhầm.\n– Cháu có muốn học không? – ông hỏi khi nó đọc xong.\nCon bé ngẩng lên, đôi mắt sáng rỡ. Nó không trả lời, nhưng ông hiểu. Từ hôm ấy, những buổi sáng của nó bắt đầu từ khi trời còn tối, theo chân ông lên đồi, xuống suối, vào những cánh rừng mà trước đây nó chưa từng dám bước chân tới.\nĐoạn văn bản giữ chỗ tiếp tục để minh hoạ cách nội dung dài được tự động chia thành nhiều trang. Anh/chị có thể dán toàn bộ bản thảo vào ô nội dung trong trình soạn, sách sẽ tự dàn trang, tự mở chương mới ở trang mới và tự đánh số trang.\n",
+  "media": {
+    "anh1": {
+      "src": "assets/pages/page-01.svg",
+      "caption": "",
+      "fit": "full"
+    },
+    "anh2": {
+      "src": "assets/pages/page-05.svg",
+      "caption": "",
+      "fit": "full"
+    }
+  },
+  "paperColor": "#fbf9f3",
+  "background": {
+    "color": "#8fb0db",
+    "image": "assets/background.svg"
+  },
+  "cta": {
+    "title": "Bạn đã đọc hết phần đọc thử",
+    "text": "Đặt mua sách để đọc tiếp trọn vẹn câu chuyện.",
+    "button": "Mua sách ngay",
+    "url": "https://example.com/mua-sach",
+    "target": "_top"
+  },
+  "texts": {
+    "hint": "Bấm vào sách để đọc thử",
+    "loading": "Đang tải sách…",
+    "insideCover": "Bản đọc thử",
+    "endPage": "Hết phần đọc thử"
+  },
+  "pageNumberStart": 1
+}
